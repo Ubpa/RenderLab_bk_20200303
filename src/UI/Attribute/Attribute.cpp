@@ -347,16 +347,22 @@ void Attribute::ComponentVisitor::Visit(Ptr<TriMesh> mesh) {
 	});
 	grid->AddButton("Paramaterize", [mesh, pOGLW = attr->pOGLW]() {
 		auto paramaterize = Paramaterize::New(mesh);
-		paramaterize->Run();
+		if (paramaterize->Run())
+			printf("Paramaterize done");
 		pOGLW->DirtyVAO(mesh);
+		
 	});
 
 	grid->AddButton("Deform RBF", [mesh, pOGLW = attr->pOGLW]() {
 		bool canDeform;
-		if (GS::GetV("canDeform", canDeform))
+		if (GS::GetV("canDeform", canDeform)) {
 			GS::Reg("canDeform", !canDeform);
-		else
+			printf("can not deform now\n");
+		}
+		else {
 			GS::Reg("canDeform", true);
+			printf("can deform now\n");
+		}
 	});
 }
 

@@ -267,6 +267,7 @@ __pycache__/
 *.gif
 *.png
 *.pdf
+*.zip
 
 config/config.out
 

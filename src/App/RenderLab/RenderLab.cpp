@@ -58,9 +58,9 @@ RenderLab::RenderLab(QWidget *parent)
 	timer->start(1000 / fps);
 
 	//auto root = SObj::Load(ROOT_PATH + "data/SObjs/CB_Glass.sobj");
-	auto root = SObj::Load("C:/Users/Administrator/Documents/env.sobj");
-	scene = Scene::New(root);
-	//scene = GenScene(7);
+	//auto root = SObj::Load("C:/Users/Administrator/Documents/debug2.sobj");
+	//scene = Scene::New(root);
+	scene = GenScene(11);
 
 	// viewer
 	viewer = Viewer::New(ui.OGLW_Raster, scene, RasterType::DeferredPipeline);
@@ -83,7 +83,7 @@ RenderLab::RenderLab(QWidget *parent)
 
 	Hierarchy::GetInstance()->Init(scene, ui.tree_Hierarchy);
 
-	Attribute::GetInstance()->Init(ui.tbox_Attribute);
+	Attribute::GetInstance()->Init(ui.tbox_Attribute, ui.OGLW_Raster);
 
 	InitSetting();
 }
