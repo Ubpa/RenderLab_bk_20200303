@@ -168,7 +168,7 @@ void HEMesh<V, _0, _1, _2>::RemoveVertex(Ptr<V> v) {
 }
 
 template<typename V, typename _0, typename _1, typename _2>
-Ptr<V> HEMesh<V, _0, _1, _2>::SpiltEdge(Ptr<E> e) {
+const Ptr<V> HEMesh<V, _0, _1, _2>::SpiltEdge(Ptr<E> e) {
 	auto he01 = e->HalfEdge();
 	auto he10 = he01->Pair();
 
@@ -197,12 +197,12 @@ Ptr<V> HEMesh<V, _0, _1, _2>::SpiltEdge(Ptr<E> e) {
 		auto v1 = he10->Origin();
 		auto v2 = he12->End();
 
-		RemoveEdge(e, false); // don't erase
+		RemoveEdge(e);
 		
 		auto v3 = AddVertex();
 
 		auto e30 = AddEdge(v3, v0);
-		auto e31 = _AddEdge(v3, v1, e); // use old edge
+		auto e31 = AddEdge(v3, v1);
 		auto e32 = AddEdge(v3, v2);
 
 		auto he31 = e31->HalfEdge();
@@ -234,12 +234,12 @@ Ptr<V> HEMesh<V, _0, _1, _2>::SpiltEdge(Ptr<E> e) {
 	auto v2 = he20->Origin();
 	auto v3 = he31->Origin();
 
-	RemoveEdge(e, false); // don't erase
+	RemoveEdge(e);
 
 	auto v4 = AddVertex();
 
 	auto e40 = AddEdge(v4, v0);
-	auto e41 = _AddEdge(v4, v1, e); // use old edge
+	auto e41 = AddEdge(v4, v1);
 	auto e42 = AddEdge(v4, v2);
 	auto e43 = AddEdge(v4, v3);
 

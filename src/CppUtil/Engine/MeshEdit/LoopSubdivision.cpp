@@ -156,22 +156,23 @@ void LoopSubdivision::HEMeshSubdivision() {
 		for (auto & worker : workers)
 			worker.join();
 	}
-	
-	// 3. spilt edges
-	auto & edges = heMesh->Edges();
-	size_t nE = edges.size();
-	vector<Ptr<E>> newEdges;
-	newEdges.reserve(2 * nE);
-	for (int i = 0; i < nE; i++) { // when i go up, edges change, but still can iterate 
-		auto e = edges[i];
 
-		auto v = heMesh->SpiltEdge(e); // e remains in container
+	// 3. spilt edges
+	auto edges = heMesh->Edges(); // must copy
+	vector<Ptr<E>> newEdges;
+	newEdges.reserve(2 * edges.size());
+	for (auto e : edges) {
+		auto v0 = e->HalfEdge()->Origin();
+		auto v1 = e->HalfEdge()->End();
+
+		auto v = heMesh->SpiltEdge(e); // e is deleted in HEMesh
 		v->isNew = true;
 		v->newPos = e->newPos;
 
-		auto he = e->HalfEdge();
-		newEdges.push_back(he->Next()->Next()->Edge());
-		newEdges.push_back(he->Pair()->Next()->Edge());
+		for (auto he : v->AjdOutHEs()) {
+			if (he->End() != v0 && he->End() != v1)
+				newEdges.push_back(he->Edge());
+		}
 	}
 
 	// 4. flip new edge with old and new vertex

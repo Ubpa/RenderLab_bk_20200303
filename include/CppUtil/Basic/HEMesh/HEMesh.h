@@ -35,11 +35,6 @@ namespace CppUtil {
 			const std::vector<Ptr<E>> & Edges() { return edges.vec(); }
 			const std::vector<Ptr<P>> & Polygons() { return polygons.vec(); }
 
-			const std::vector<PtrC<V>> Vertices() const { return Const(const_cast<HEMesh*>(this)->Vertices()); }
-			const std::vector<PtrC<HE>> HalfEdges() const { return Const(const_cast<HEMesh*>(this)->HalfEdges()); }
-			const std::vector<PtrC<E>> Edges() const { return Const(const_cast<HEMesh*>(this)->Edges()); }
-			const std::vector<PtrC<P>> Polygons() const { return Const(const_cast<HEMesh*>(this)->Polygons()); }
-
 			size_t NumVertices() const { return vertices.size(); }
 			size_t NumEdges() const { return halfEdges.size(); }
 			size_t NumPolygons() const { return polygons.size(); }
@@ -58,7 +53,7 @@ namespace CppUtil {
 			void Reserve(size_t n);
 
 			// -----------------
-			// [basic mesh edit]
+			//  basic mesh edit
 			// -----------------
 
 			template<typename ...Args>
@@ -73,14 +68,12 @@ namespace CppUtil {
 			void RemoveEdge(Ptr<E> e) { RemoveEdge(e, true); }
 			void RemoveVertex(Ptr<V> v);
 
-			// --------------------
-			// high-level mesh edit
-			// --------------------
+			// ----------------------
+			//  high-level mesh edit
+			// ----------------------
 
-			// e remains in container
-			// add 3 new edge
-			// new e's halfedge is from new v to e->halfedge->end
-			Ptr<V> SpiltEdge(Ptr<E> e);
+			// delete e
+			const Ptr<V> SpiltEdge(Ptr<E> e);
 
 			// counter-clock, remain e in container
 			bool RotateEdge(Ptr<E> e);
