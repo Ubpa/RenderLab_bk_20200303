@@ -412,6 +412,42 @@ const Ptr<V> HEMesh<V, _0, _1, _2>::AddPolygonVertex(Ptr<P> p, Ptr<V> v, Args&& 
 }
 
 template<typename V, typename _0, typename _1, typename _2>
+const Ptr<typename V::E_t> HEMesh<V, _0, _1, _2>::ConnectVertex(Ptr<HE> he0, Ptr<HE> he1) {
+	auto p = he0->Polygon();
+	if (p != he1->Polygon()) {
+		printf("ERROR::HEMesh::ConnectVertex:\n"
+			"\t""he0->Polygon != he1->Polygon\n");
+		return nullptr;
+	}
+
+	auto v0 = he0->Origin();
+	auto v1 = he1->Origin();
+	if (v0 == v1) {
+		printf("ERROR::HEMesh::ConnectVertex:\n"
+			"\t""he0->Origin == he1->Origin\n");
+		return nullptr;
+	}
+
+	auto he0Loop = he0->NextTo(he1);
+	auto he1Loop = he1->NextTo(he0);
+	
+	auto e01 = AddEdge(v0, v1);
+
+	auto he01 = e01->HalfEdge();
+	auto he10 = he01->Pair();
+	he0Loop.push_back(he10);
+	he1Loop.push_back(he01);
+
+	if (!P::IsBoundary(p)) {
+		RemovePolygon(p);
+		AddPolygon(he0Loop);
+		AddPolygon(he1Loop);
+	}
+
+	return e01;
+}
+
+template<typename V, typename _0, typename _1, typename _2>
 const Ptr<V> HEMesh<V, _0, _1, _2>::CollapseEdge(Ptr<E> e) {
 	return nullptr;
 }

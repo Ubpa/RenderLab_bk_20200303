@@ -14,6 +14,7 @@
 
 namespace CppUtil {
 	namespace Basic {
+		// nullptr Polygon is a boundary
 		template<typename V,
 			typename = std::enable_if_t<std::is_base_of_v<TVertex<V, typename V::E_t, typename V::P_t>, V>>,
 			typename = std::enable_if_t<std::is_base_of_v<TEdge<V, typename V::E_t, typename V::P_t>, typename V::E_t>>,
@@ -73,7 +74,7 @@ namespace CppUtil {
 			void RemoveVertex(Ptr<V> v);
 
 			// --------------------
-			// high level mesh edit
+			// high-level mesh edit
 			// --------------------
 
 			// e remains in container
@@ -96,8 +97,17 @@ namespace CppUtil {
 			// add a vertex in polygon
 			// v => new vertex => v
 			// he[new vertex => v].next is the first halfedge whose origin is v from p.he
+			// p.he, p.he.next, ..., **he[v => ?]**, ...
 			template<typename ...Args>
 			const Ptr<V> AddPolygonVertex(Ptr<P> p, Ptr<V> v, Args&& ... args);
+
+			// connect he0.origin and he1.origin in he0/he1.polygon
+			// [require] he0.polygon == he1.polygon, he0.origin != he1.origin
+			// [return] edge with halfedge form he0.origin to he1.origin
+			const Ptr<E> ConnectVertex(Ptr<HE> he0, Ptr<HE> he1);
+			// connect v0 and v1 in p
+			// call ConnectVertex(p->HalfEdge(v0), p->HalfEdge(v1))
+			const Ptr<E> ConnectVertex(Ptr<P> p, Ptr<V> v0, Ptr<V> v1) { return ConnectVertex(p->HalfEdge(v0), p->HalfEdge(v1)); }
 
 		private:
 			template<typename ...Args>

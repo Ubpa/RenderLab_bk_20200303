@@ -231,7 +231,8 @@ int main() {
 
 		Print(mesh);
 
-		mesh->AddPolygonVertex(p, v1, "v5");
+		auto v5 = mesh->AddPolygonVertex(p, v1, "v5");
+		mesh->ConnectVertex(v0->HalfEdge(), he23);
 
 		Print(mesh);
 	}

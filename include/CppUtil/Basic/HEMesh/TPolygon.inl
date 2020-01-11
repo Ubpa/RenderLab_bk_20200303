@@ -24,3 +24,11 @@ const std::vector<Ptr<V>> TPolygon<V, E, P>::BoundaryVertice() {
 		vertice.push_back(he->Origin());
 	return vertice;
 }
+
+template<typename V, typename E, typename P>
+const Ptr<THalfEdge<V,E,P>> TPolygon<V, E, P>::HalfEdge(Ptr<V> v) {
+	auto he = halfedge;
+	while (he->Origin() != v)
+		he = he->Next();
+	return he;
+}
