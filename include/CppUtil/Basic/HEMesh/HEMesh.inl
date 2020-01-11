@@ -367,18 +367,51 @@ const Ptr<typename V::P_t> HEMesh<V, _0, _1, _2>::EraseVertex(Ptr<V> v) {
 }
 
 template<typename V, typename _0, typename _1, typename _2>
+template<typename ...Args>
+const Ptr<V> HEMesh<V, _0, _1, _2>::AddPolygonVertex(Ptr<HE> he, Args && ... args) {
+	auto p = he->Polygon();
+
+	auto pre = he->Pre();
+	auto v0 = he->Origin();
+	auto v1 = AddVertex(std::forward<Args>(args)...);
+	
+	auto he01 = Basic::New<HE>();
+	auto he10 = Basic::New<HE>();
+	halfEdges.insert(he01);
+	halfEdges.insert(he10);
+	auto e01 = Basic::New<E>();
+	edges.insert(e01);
+
+	he01->SetNext(he10);
+	he01->SetPair(he10);
+	he01->SetOrigin(v0);
+	he01->SetEdge(e01);
+	he01->SetPolygon(p);
+
+	he10->SetNext(he);
+	he10->SetPair(he01);
+	he10->SetOrigin(v1);
+	he10->SetEdge(e01);
+	he10->SetPolygon(p);
+
+	e01->SetHalfEdge(he01);
+	v1->SetHalfEdge(he10);
+
+	pre->SetNext(he01);
+
+	return v1;
+}
+
+template<typename V, typename _0, typename _1, typename _2>
+template<typename ...Args>
+const Ptr<V> HEMesh<V, _0, _1, _2>::AddPolygonVertex(Ptr<P> p, Ptr<V> v, Args&& ... args) {
+	auto he = p->HalfEdge();
+	while (he->Origin() != v)
+		he = he->Next();
+	return AddPolygonVertex(he, std::forward<Args>(args)...);
+}
+
+template<typename V, typename _0, typename _1, typename _2>
 const Ptr<V> HEMesh<V, _0, _1, _2>::CollapseEdge(Ptr<E> e) {
-	if (e->IsFree()) {
-		printf("ERROR::HEMesh::Collapse:\n"
-			"\t""edge is free\n");
-		return nullptr;
-	}
-
-	if (e->IsBoundary()) {
-		printf("ERROR::HEMesh::Collapse:\n"
-			"\t""case[e->IsBoundary()] not implemented\n");
-		return nullptr;
-	}
-
-
+	return nullptr;
 }

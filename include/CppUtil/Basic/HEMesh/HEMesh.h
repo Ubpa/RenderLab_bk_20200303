@@ -56,6 +56,10 @@ namespace CppUtil {
 			void Clear();
 			void Reserve(size_t n);
 
+			// -----------------
+			// [basic mesh edit]
+			// -----------------
+
 			template<typename ...Args>
 			const Ptr<V> AddVertex(Args&& ... args);
 			// e's halfedge is form v0 to v1
@@ -68,6 +72,10 @@ namespace CppUtil {
 			void RemoveEdge(Ptr<E> e) { RemoveEdge(e, true); }
 			void RemoveVertex(Ptr<V> v);
 
+			// --------------------
+			// high level mesh edit
+			// --------------------
+
 			// e remains in container
 			// add 3 new edge
 			// new e's halfedge is from new v to e->halfedge->end
@@ -79,6 +87,17 @@ namespace CppUtil {
 			const Ptr<P> EraseVertex(Ptr<V> v);
 
 			const Ptr<V> CollapseEdge(Ptr<E> e);
+
+
+			// add a vertex in he.polygon
+			// he.origin => new vertex => he.origin
+			template<typename ...Args>
+			const Ptr<V> AddPolygonVertex(Ptr<HE> he, Args&& ... args);
+			// add a vertex in polygon
+			// v => new vertex => v
+			// he[new vertex => v].next is the first halfedge whose origin is v from p.he
+			template<typename ...Args>
+			const Ptr<V> AddPolygonVertex(Ptr<P> p, Ptr<V> v, Args&& ... args);
 
 		private:
 			template<typename ...Args>

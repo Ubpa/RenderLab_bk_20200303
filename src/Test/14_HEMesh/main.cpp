@@ -227,7 +227,11 @@ int main() {
 
 		Print(mesh);
 	
-		mesh->EraseVertex(newV);
+		auto p = mesh->EraseVertex(newV);
+
+		Print(mesh);
+
+		mesh->AddPolygonVertex(p, v1, "v5");
 
 		Print(mesh);
 	}
