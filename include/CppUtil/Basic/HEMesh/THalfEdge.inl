@@ -39,3 +39,14 @@ bool THalfEdge<V, E, P>::MakeAdjacent(Ptr<THalfEdge> inHE, Ptr<THalfEdge> outHE)
 
 	return true;
 }
+
+template<typename V, typename E, typename P>
+const std::vector<Ptr<THalfEdge<V,E,P>>> THalfEdge<V, E, P>::Between(Ptr<THalfEdge> begin, Ptr<THalfEdge> end) {
+	std::vector<Ptr<THalfEdge<V, E, P>>> hes;
+	auto he = begin;
+	do {
+		hes.push_back(he);
+		he = he->Next();
+	} while (he != end);
+	return hes;
+}

@@ -16,6 +16,7 @@ namespace CppUtil {
 			const Ptr<THalfEdge<V, E, P>> HalfEdge() const { return const_cast<TEdge*>(this)->HalfEdge(); }
 			
 			bool IsBoundary() const { return HalfEdge()->IsBoundary() || HalfEdge()->Pair()->IsBoundary(); }
+			bool IsFree() const { return HalfEdge()->IsFree() && HalfEdge()->Pair()->IsFree(); }
 
 			void SetHalfEdge(Ptr<THalfEdge<V, E, P> > he) { halfEdge = he; }
 

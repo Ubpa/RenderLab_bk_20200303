@@ -11,21 +11,29 @@ class V;
 class E;
 class P;
 class V : public TVertex<V,E,P> {
+public:
+	V(const string & name = "NO_NAME") : name(name){}
 protected:
 	virtual ~V() = default;
 public:
 	string name;
 };
 class E : public TEdge<V, E, P> {
+public:
+	E(const string& pre = "E") : pre(pre){}
 protected:
 	virtual ~E() = default;
 public:
-	const string Name() const { return HalfEdge()->Origin()->name + "-" + HalfEdge()->End()->name; }
+	const string Name() const { return "[" + pre + "]" + HalfEdge()->Origin()->name + "-" + HalfEdge()->End()->name; }
+private:
+	string pre;
 };
 class P : public TPolygon<V, E, P> {
 public:
+	P(const string& pre = "P") :pre(pre) {}
+public:
 	const string Name() const {
-		string name;
+		string name = "[" + pre + "]";
 		auto he = HalfEdge();
 		name += he->Origin()->name;
 		do {
@@ -36,6 +44,8 @@ public:
 	}
 protected:
 	virtual ~P() = default;
+private:
+	string pre;
 };
 
 ostream & operator<< (ostream & os, Ptr<V> v) {
@@ -71,7 +81,7 @@ void Print(Ptr<HEMesh<V>> mesh) {
 }
 
 int main() {
-	// test 0
+	// test basic
 	{
 		cout
 			<< "------------------" << endl
@@ -80,22 +90,20 @@ int main() {
 
 		auto mesh = HEMesh<V>::New();
 		cout << "add v0, v1, v2" << endl;
-		auto v0 = mesh->AddVertex();
-		v0->name = "v0";
-		auto v1 = mesh->AddVertex();
-		v1->name = "v1";
-		auto v2 = mesh->AddVertex();
-		v2->name = "v2";
+
+		auto v0 = mesh->AddVertex("v0");
+		auto v1 = mesh->AddVertex("v1");
+		auto v2 = mesh->AddVertex("v2");
 		Print(mesh);
 
 		cout << "add e01, e12, e21" << endl;
-		auto e01 = mesh->AddEdge(v0, v1);
-		auto e12 = mesh->AddEdge(v1, v2);
-		auto e20 = mesh->AddEdge(v2, v0);
+		auto e01 = mesh->AddEdge(v0, v1, "E0");
+		auto e12 = mesh->AddEdge(v1, v2, "E1");
+		auto e20 = mesh->AddEdge(v2, v0, "E2");
 		Print(mesh);
 
 		cout << "add p0" << endl;
-		auto p0 = mesh->AddPolygon({ e01->HalfEdge(),e12->HalfEdge(),e20->HalfEdge() });
+		auto p0 = mesh->AddPolygon({ e01->HalfEdge(),e12->HalfEdge(),e20->HalfEdge() }, "P0");
 		Print(mesh);
 
 		cout << e01->Name() << " is " << (e01->IsBoundary() ? "" : "not ") << "a boundary" << endl;
@@ -114,7 +122,6 @@ int main() {
 		Print(mesh);
 	}
 	
-
 	// test spilt edge
 	{
 		cout
@@ -124,20 +131,16 @@ int main() {
 
 		auto mesh = HEMesh<V>::New();
 
-		auto v0 = mesh->AddVertex();
-		auto v1 = mesh->AddVertex();
-		auto v2 = mesh->AddVertex();
-		auto v3 = mesh->AddVertex();
-		v0->name = "v0";
-		v1->name = "v1";
-		v2->name = "v2";
-		v3->name = "v3";
+		auto v0 = mesh->AddVertex("v0");
+		auto v1 = mesh->AddVertex("v1");
+		auto v2 = mesh->AddVertex("v2");
+		auto v3 = mesh->AddVertex("v3");
 
-		auto e01 = mesh->AddEdge(v0, v1);
-		auto e12 = mesh->AddEdge(v1, v2);
-		auto e02 = mesh->AddEdge(v0, v2);
-		auto e23 = mesh->AddEdge(v2, v3);
-		auto e30 = mesh->AddEdge(v3, v0);
+		auto e01 = mesh->AddEdge(v0, v1, "E0");
+		auto e12 = mesh->AddEdge(v1, v2, "E1");
+		auto e02 = mesh->AddEdge(v0, v2, "E2");
+		auto e23 = mesh->AddEdge(v2, v3, "E3");
+		auto e30 = mesh->AddEdge(v3, v0, "E4");
 
 		auto he01 = e01->HalfEdge();
 		auto he12 = e12->HalfEdge();
@@ -146,8 +149,8 @@ int main() {
 		auto he30 = e30->HalfEdge();
 		auto he20 = he02->Pair();
 
-		mesh->AddPolygon({ he01,he12,he20 });
-		mesh->AddPolygon({ he02,he23,he30 });
+		mesh->AddPolygon({ he01,he12,he20 }, "P0");
+		mesh->AddPolygon({ he02,he23,he30 }, "P1");
 
 		auto v = mesh->SpiltEdge(e02);
 		v->name = "v4";
@@ -164,20 +167,16 @@ int main() {
 
 		auto mesh = HEMesh<V>::New();
 
-		auto v0 = mesh->AddVertex();
-		auto v1 = mesh->AddVertex();
-		auto v2 = mesh->AddVertex();
-		auto v3 = mesh->AddVertex();
-		v0->name = "v0";
-		v1->name = "v1";
-		v2->name = "v2";
-		v3->name = "v3";
+		auto v0 = mesh->AddVertex("v1");
+		auto v1 = mesh->AddVertex("v2");
+		auto v2 = mesh->AddVertex("v3");
+		auto v3 = mesh->AddVertex("v4");
 
-		auto e01 = mesh->AddEdge(v0, v1);
-		auto e12 = mesh->AddEdge(v1, v2);
-		auto e02 = mesh->AddEdge(v0, v2);
-		auto e23 = mesh->AddEdge(v2, v3);
-		auto e30 = mesh->AddEdge(v3, v0);
+		auto e01 = mesh->AddEdge(v0, v1, "E0");
+		auto e12 = mesh->AddEdge(v1, v2, "E1");
+		auto e02 = mesh->AddEdge(v0, v2, "E2");
+		auto e23 = mesh->AddEdge(v2, v3, "E3");
+		auto e30 = mesh->AddEdge(v3, v0, "E4");
 
 		auto he01 = e01->HalfEdge();
 		auto he12 = e12->HalfEdge();
@@ -186,11 +185,50 @@ int main() {
 		auto he30 = e30->HalfEdge();
 		auto he20 = he02->Pair();
 
-		mesh->AddPolygon({ he01,he12,he20 });
-		mesh->AddPolygon({ he02,he23,he30 });
+		mesh->AddPolygon({ he01,he12,he20 }, "P0");
+		mesh->AddPolygon({ he02,he23,he30 }, "P1");
 
 		Print(mesh);
 		mesh->RotateEdge(e02);
+		Print(mesh);
+	}
+
+	// test collapse edge
+	{
+		cout
+			<< "-------------------------" << endl
+			<< "    test CollapseEdge    " << endl
+			<< "-------------------------" << endl;
+
+		auto mesh = HEMesh<V>::New();
+
+		auto v0 = mesh->AddVertex("v0");
+		auto v1 = mesh->AddVertex("v1");
+		auto v2 = mesh->AddVertex("v2");
+		auto v3 = mesh->AddVertex("v3");
+
+		auto e01 = mesh->AddEdge(v0, v1, "E0");
+		auto e12 = mesh->AddEdge(v1, v2, "E1");
+		auto e02 = mesh->AddEdge(v0, v2, "E2");
+		auto e23 = mesh->AddEdge(v2, v3, "E3");
+		auto e30 = mesh->AddEdge(v3, v0, "E4");
+
+		auto he01 = e01->HalfEdge();
+		auto he12 = e12->HalfEdge();
+		auto he02 = e02->HalfEdge();
+		auto he23 = e23->HalfEdge();
+		auto he30 = e30->HalfEdge();
+		auto he20 = he02->Pair();
+
+		mesh->AddPolygon({ he01,he12,he20 }, "P0");
+		mesh->AddPolygon({ he02,he23,he30 }, "P1");
+
+		auto newV = mesh->SpiltEdge(e02);
+
+		Print(mesh);
+	
+		mesh->EraseVertex(newV);
+
 		Print(mesh);
 	}
 

@@ -1,12 +1,14 @@
 template<typename V, typename _0, typename _1, typename _2>
-const Ptr<V> HEMesh<V, _0, _1, _2>::AddVertex() {
-	auto v = Basic::New<V>();
+template<typename ...Args>
+const Ptr<V> HEMesh<V, _0, _1, _2>::AddVertex(Args&& ... args) {
+	auto v = Basic::New<V>(std::forward<Args>(args)...);
 	vertices.insert(v);
 	return v;
 }
 
 template<typename V, typename _0, typename _1, typename _2>
-const Ptr<typename V::E_t> HEMesh<V, _0, _1, _2>::AddEdge(Ptr<V> v0, Ptr<V> v1, Ptr<E> e) {
+template<typename ...Args>
+const Ptr<typename V::E_t> HEMesh<V, _0, _1, _2>::_AddEdge(Ptr<V> v0, Ptr<V> v1, Ptr<E> e, Args && ... args) {
 	if (v0 == v1) {
 		printf("ERROR::HEMesh::AddEdge\n"
 			"\t""v0 == v1\n");
@@ -20,7 +22,7 @@ const Ptr<typename V::E_t> HEMesh<V, _0, _1, _2>::AddEdge(Ptr<V> v0, Ptr<V> v1, 
 
 	bool newEdge = false;
 	if (!e) {
-		e = Basic::New<E>();
+		e = Basic::New<E>(std::forward<Args>(args)...);
 		edges.insert(e);
 		newEdge = true;
 	}
@@ -70,7 +72,8 @@ const Ptr<typename V::E_t> HEMesh<V, _0, _1, _2>::AddEdge(Ptr<V> v0, Ptr<V> v1, 
 }
 
 template<typename V, typename _0, typename _1, typename _2>
-const Ptr<typename V::P_t> HEMesh<V, _0, _1, _2>::AddPolygon(const std::vector<Ptr<HE>> heLoop) {
+template<typename ...Args>
+const Ptr<typename V::P_t> HEMesh<V, _0, _1, _2>::AddPolygon(const std::vector<Ptr<HE>> heLoop, Args && ... args) {
 	if (heLoop.size() == 0) {
 		printf("ERROR::HEMesh::AddPolygon:\n"
 			"\t""heLoop is empty\n");
@@ -101,7 +104,7 @@ const Ptr<typename V::P_t> HEMesh<V, _0, _1, _2>::AddPolygon(const std::vector<P
 	}
 
 	// link polygon and heLoop
-	auto polygon = Basic::New<P>();
+	auto polygon = Basic::New<P>(std::forward<Args>(args)...);
 	polygons.insert(polygon);
 
 	polygon->SetHalfEdge(heLoop[0]);
@@ -199,7 +202,7 @@ Ptr<V> HEMesh<V, _0, _1, _2>::SpiltEdge(Ptr<E> e) {
 		auto v3 = AddVertex();
 
 		auto e30 = AddEdge(v3, v0);
-		auto e31 = AddEdge(v3, v1, e); // use old edge
+		auto e31 = _AddEdge(v3, v1, e); // use old edge
 		auto e32 = AddEdge(v3, v2);
 
 		auto he31 = e31->HalfEdge();
@@ -236,7 +239,7 @@ Ptr<V> HEMesh<V, _0, _1, _2>::SpiltEdge(Ptr<E> e) {
 	auto v4 = AddVertex();
 
 	auto e40 = AddEdge(v4, v0);
-	auto e41 = AddEdge(v4, v1, e); // use old edge
+	auto e41 = _AddEdge(v4, v1, e); // use old edge
 	auto e42 = AddEdge(v4, v2);
 	auto e43 = AddEdge(v4, v3);
 
@@ -285,7 +288,7 @@ bool HEMesh<V, _0, _1, _2>::RotateEdge(Ptr<E> e) {
 	auto heLoop1 = poly1->BoundaryHEs(he02->Next(), he10);
 
 	RemoveEdge(e, false); // don't erase
-	AddEdge(v2, v3, e); // use old edge
+	_AddEdge(v2, v3, e); // use old edge
 
 	auto he23 = e->HalfEdge();
 	auto he32 = he23->Pair();
@@ -351,4 +354,31 @@ const std::vector<std::vector<Ptr<typename V::HE>>> HEMesh<V, _0, _1, _2>::Bound
 		}
 	}
 	return boundaries;
+}
+
+template<typename V, typename _0, typename _1, typename _2>
+const Ptr<typename V::P_t> HEMesh<V, _0, _1, _2>::EraseVertex(Ptr<V> v) {
+	bool isBoundary = v->IsBoundary();
+	auto pHE = v->HalfEdge()->Next();
+	RemoveVertex(v);
+	if (isBoundary)
+		return nullptr;
+	return AddPolygon(pHE->Loop());
+}
+
+template<typename V, typename _0, typename _1, typename _2>
+const Ptr<V> HEMesh<V, _0, _1, _2>::CollapseEdge(Ptr<E> e) {
+	if (e->IsFree()) {
+		printf("ERROR::HEMesh::Collapse:\n"
+			"\t""edge is free\n");
+		return nullptr;
+	}
+
+	if (e->IsBoundary()) {
+		printf("ERROR::HEMesh::Collapse:\n"
+			"\t""case[e->IsBoundary()] not implemented\n");
+		return nullptr;
+	}
+
+
 }

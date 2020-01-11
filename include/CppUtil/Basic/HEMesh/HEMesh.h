@@ -48,11 +48,22 @@ namespace CppUtil {
 			size_t Index(Ptr<E> e) const { return edges.idx(e); }
 			size_t Index(Ptr<P> p) const { return polygons.idx(p); }
 
-			const Ptr<V> AddVertex();
+			bool HaveBoundary() const;
+			const std::vector<std::vector<Ptr<HE>>> Boundaries();
+			size_t NumBoundaries() const { return const_cast<HEMesh*>(this)->Boundaries().size(); }
+			bool IsTriMesh() const;
+
+			void Clear();
+			void Reserve(size_t n);
+
+			template<typename ...Args>
+			const Ptr<V> AddVertex(Args&& ... args);
 			// e's halfedge is form v0 to v1
-			const Ptr<E> AddEdge(Ptr<V> v0, Ptr<V> v1) { return AddEdge(v0, v1, nullptr); }
+			template<typename ...Args>
+			const Ptr<E> AddEdge(Ptr<V> v0, Ptr<V> v1, Args&& ... args) { return _AddEdge(v0, v1, nullptr, std::forward<Args>(args)...); }
 			// polygon's halfedge is heLoop[0]
-			const Ptr<P> AddPolygon(const std::vector<Ptr<HE>> heLoop);
+			template<typename ...Args>
+			const Ptr<P> AddPolygon(const std::vector<Ptr<HE>> heLoop, Args&& ... args);
 			void RemovePolygon(Ptr<P> polygon);
 			void RemoveEdge(Ptr<E> e) { RemoveEdge(e, true); }
 			void RemoveVertex(Ptr<V> v);
@@ -61,19 +72,17 @@ namespace CppUtil {
 			// add 3 new edge
 			// new e's halfedge is from new v to e->halfedge->end
 			Ptr<V> SpiltEdge(Ptr<E> e);
+
 			// counter-clock, remain e in container
 			bool RotateEdge(Ptr<E> e);
 
-			void Clear();
-			void Reserve(size_t n);
+			const Ptr<P> EraseVertex(Ptr<V> v);
 
-			bool HaveBoundary() const;
-			const std::vector<std::vector<Ptr<HE>>> Boundaries();
-			size_t NumBoundaries() const { return const_cast<HEMesh*>(this)->Boundaries().size(); }
-			bool IsTriMesh() const;
+			const Ptr<V> CollapseEdge(Ptr<E> e);
 
 		private:
-			const Ptr<E> AddEdge(Ptr<V> v0, Ptr<V> v1, Ptr<E> e);
+			template<typename ...Args>
+			const Ptr<E> _AddEdge(Ptr<V> v0, Ptr<V> v1, Ptr<E> e, Args&& ... args);
 			void RemoveEdge(Ptr<E> e, bool needErase);
 
 		protected:
