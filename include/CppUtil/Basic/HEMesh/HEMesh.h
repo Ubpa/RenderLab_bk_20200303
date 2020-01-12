@@ -57,7 +57,7 @@ namespace CppUtil {
 			// -----------------
 
 			template<typename ...Args>
-			const Ptr<V> AddVertex(Args&& ... args);
+			const Ptr<V> AddVertex(Args&& ... args) { return NewVertex(std::forward<Args>(args)...); }
 			// e's halfedge is form v0 to v1
 			template<typename ...Args>
 			const Ptr<E> AddEdge(Ptr<V> v0, Ptr<V> v1, Args&& ... args) { return _AddEdge(v0, v1, nullptr, std::forward<Args>(args)...); }
@@ -78,19 +78,18 @@ namespace CppUtil {
 			// counter-clock, remain e in container
 			bool RotateEdge(Ptr<E> e);
 
+			// RemoveVertex and AddPolygon
 			const Ptr<P> EraseVertex(Ptr<V> v);
 
 			const Ptr<V> CollapseEdge(Ptr<E> e);
 
-
 			// add a vertex in he.polygon
 			// he.origin => new vertex => he.origin
+			// polygon can be boundary
 			template<typename ...Args>
 			const Ptr<V> AddPolygonVertex(Ptr<HE> he, Args&& ... args);
 			// add a vertex in polygon
-			// v => new vertex => v
-			// he[new vertex => v].next is the first halfedge whose origin is v from p.he
-			// p.he, p.he.next, ..., **he[v => ?]**, ...
+			// polygon can be boundary
 			template<typename ...Args>
 			const Ptr<V> AddPolygonVertex(Ptr<P> p, Ptr<V> v, Args&& ... args);
 
@@ -99,14 +98,23 @@ namespace CppUtil {
 			// [return] edge with halfedge form he0.origin to he1.origin
 			const Ptr<E> ConnectVertex(Ptr<HE> he0, Ptr<HE> he1);
 			// connect v0 and v1 in p
-			// call ConnectVertex(p->HalfEdge(v0), p->HalfEdge(v1))
-			const Ptr<E> ConnectVertex(Ptr<P> p, Ptr<V> v0, Ptr<V> v1) { return ConnectVertex(p->HalfEdge(v0), p->HalfEdge(v1)); }
+			// call ConnectVertex(p->HalfEdge()->NextAt(v0), p->HalfEdge()->NextAt(v1))
+			// [require] p isn't boundary(nullptr)
+			const Ptr<E> ConnectVertex(Ptr<P> p, Ptr<V> v0, Ptr<V> v1) { return ConnectVertex(p->HalfEdge()->NextAt(v0), p->HalfEdge()->NextAt(v1)); }
 
 		private:
 			template<typename ...Args>
 			const Ptr<E> _AddEdge(Ptr<V> v0, Ptr<V> v1, Ptr<E> e, Args&& ... args);
 			void RemoveEdge(Ptr<E> e, bool needErase);
 
+			// new and insert
+			const Ptr<HE> NewHalfEdge();
+			template<typename ...Args>
+			const Ptr<V> NewVertex(Args&& ... args);
+			template<typename ...Args>
+			const Ptr<E> NewEdge(Args&& ... args);
+			template<typename ...Args>
+			const Ptr<P> NewPolygon(Args&& ... args);
 		protected:
 			virtual ~HEMesh() = default;
 

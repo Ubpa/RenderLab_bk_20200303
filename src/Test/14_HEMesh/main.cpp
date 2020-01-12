@@ -223,16 +223,16 @@ int main() {
 		mesh->AddPolygon({ he01,he12,he20 }, "P0");
 		mesh->AddPolygon({ he02,he23,he30 }, "P1");
 
-		auto newV = mesh->SpiltEdge(e02);
+		auto v4 = mesh->SpiltEdge(e02);
+		v4->name = "v4";
+
+		auto v5 = mesh->SpiltEdge(he23->Next()->Edge());
+		v5->name = "v5";
 
 		Print(mesh);
 	
-		auto p = mesh->EraseVertex(newV);
-
-		Print(mesh);
-
-		auto v5 = mesh->AddPolygonVertex(p, v1, "v5");
-		mesh->ConnectVertex(v0->HalfEdge(), he23);
+		auto v6 = mesh->CollapseEdge(v4->EdgeWith(v5));
+		v6->name = "v6";
 
 		Print(mesh);
 	}

@@ -169,7 +169,7 @@ void LoopSubdivision::HEMeshSubdivision() {
 		v->isNew = true;
 		v->newPos = e->newPos;
 
-		for (auto he : v->AjdOutHEs()) {
+		for (auto he : v->AdjOutHEs()) {
 			if (he->End() != v0 && he->End() != v1)
 				newEdges.push_back(he->Edge());
 		}

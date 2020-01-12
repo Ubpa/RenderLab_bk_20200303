@@ -1,9 +1,32 @@
 template<typename V, typename _0, typename _1, typename _2>
+const Ptr<typename HEMesh<V, _0, _1, _2>::HE> HEMesh<V, _0, _1, _2>::NewHalfEdge() {
+	auto he = Basic::New<HE>();
+	halfEdges.insert(he);
+	return he;
+}
+
+template<typename V, typename _0, typename _1, typename _2>
 template<typename ...Args>
-const Ptr<V> HEMesh<V, _0, _1, _2>::AddVertex(Args&& ... args) {
+const Ptr<V> HEMesh<V, _0, _1, _2>::NewVertex(Args&& ... args) {
 	auto v = Basic::New<V>(std::forward<Args>(args)...);
 	vertices.insert(v);
 	return v;
+}
+
+template<typename V, typename _0, typename _1, typename _2>
+template<typename ...Args>
+const Ptr<typename V::E_t> HEMesh<V, _0, _1, _2>::NewEdge(Args&& ... args) {
+	auto e = Basic::New<E>(std::forward<Args>(args)...);
+	edges.insert(e);
+	return e;
+}
+
+template<typename V, typename _0, typename _1, typename _2>
+template<typename ...Args>
+const Ptr<typename V::P_t> HEMesh<V, _0, _1, _2>::NewPolygon(Args&& ... args) {
+	auto p = Basic::New<P>(std::forward<Args>(args)...);
+	polygons.insert(p);
+	return p;
 }
 
 template<typename V, typename _0, typename _1, typename _2>
@@ -22,15 +45,12 @@ const Ptr<typename V::E_t> HEMesh<V, _0, _1, _2>::_AddEdge(Ptr<V> v0, Ptr<V> v1,
 
 	bool newEdge = false;
 	if (!e) {
-		e = Basic::New<E>(std::forward<Args>(args)...);
-		edges.insert(e);
+		e = NewEdge(std::forward<Args>(args)...);
 		newEdge = true;
 	}
 	
-	auto he0 = Basic::New<HE>();
-	auto he1 = Basic::New<HE>();
-	halfEdges.insert(he0);
-	halfEdges.insert(he1);
+	auto he0 = NewHalfEdge();
+	auto he1 = NewHalfEdge();
 	// [init]
 	e->SetHalfEdge(he0);
 
@@ -104,8 +124,7 @@ const Ptr<typename V::P_t> HEMesh<V, _0, _1, _2>::AddPolygon(const std::vector<P
 	}
 
 	// link polygon and heLoop
-	auto polygon = Basic::New<P>(std::forward<Args>(args)...);
-	polygons.insert(polygon);
+	auto polygon = NewPolygon(std::forward<Args>(args)...);
 
 	polygon->SetHalfEdge(heLoop[0]);
 	for (auto he : heLoop)
@@ -284,8 +303,8 @@ bool HEMesh<V, _0, _1, _2>::RotateEdge(Ptr<E> e) {
 	auto v2 = he02->End();
 	auto v3 = he13->End();
 
-	auto heLoop0 = poly0->BoundaryHEs(he13->Next(), he01);
-	auto heLoop1 = poly1->BoundaryHEs(he02->Next(), he10);
+	auto heLoop0 = he13->Next()->NextTo(he01);
+	auto heLoop1 = he02->Next()->NextTo(he10);
 
 	RemoveEdge(e, false); // don't erase
 	_AddEdge(v2, v3, e); // use old edge
@@ -375,12 +394,9 @@ const Ptr<V> HEMesh<V, _0, _1, _2>::AddPolygonVertex(Ptr<HE> he, Args && ... arg
 	auto v0 = he->Origin();
 	auto v1 = AddVertex(std::forward<Args>(args)...);
 	
-	auto he01 = Basic::New<HE>();
-	auto he10 = Basic::New<HE>();
-	halfEdges.insert(he01);
-	halfEdges.insert(he10);
-	auto e01 = Basic::New<E>();
-	edges.insert(e01);
+	auto he01 = NewHalfEdge();
+	auto he10 = NewHalfEdge();
+	auto e01 = NewEdge();
 
 	he01->SetNext(he10);
 	he01->SetPair(he10);
@@ -405,9 +421,23 @@ const Ptr<V> HEMesh<V, _0, _1, _2>::AddPolygonVertex(Ptr<HE> he, Args && ... arg
 template<typename V, typename _0, typename _1, typename _2>
 template<typename ...Args>
 const Ptr<V> HEMesh<V, _0, _1, _2>::AddPolygonVertex(Ptr<P> p, Ptr<V> v, Args&& ... args) {
-	auto he = p->HalfEdge();
-	while (he->Origin() != v)
-		he = he->Next();
+	Ptr<HE> he;
+	if (P::IsBoundary(p)) {
+		for (auto outHE : v->AdjOutHEs()) {
+			if (P::IsBoundary(outHE->Polygon())) {
+				he = outHE;
+				break;
+			}
+		}
+		if (he == nullptr) {
+			printf("ERROR::HEMesh::AddPolygonVertex:\n"
+				"\t""p is boundary(nullptr) but v is not on boundary\n");
+			return nullptr;
+		}
+	}
+	else
+		he = p->HalfEdge()->NextAt(v);
+	
 	return AddPolygonVertex(he, std::forward<Args>(args)...);
 }
 
@@ -428,18 +458,43 @@ const Ptr<typename V::E_t> HEMesh<V, _0, _1, _2>::ConnectVertex(Ptr<HE> he0, Ptr
 		return nullptr;
 	}
 
+	if (V::IsConnected(v0, v1)) {
+		printf("ERROR::HEMesh::ConnectVertex:\n"
+			"\t""v0 and v1 is already connected\n");
+		return nullptr;
+	}
+
+	if (!P::IsBoundary(p))
+		RemovePolygon(p);
+
+	auto he0Pre = he0->Pre();
+	auto he1Pre = he1->Pre();
+
 	auto he0Loop = he0->NextTo(he1);
 	auto he1Loop = he1->NextTo(he0);
 	
-	auto e01 = AddEdge(v0, v1);
+	auto e01 = NewEdge();
+	auto he01 = NewHalfEdge();
+	auto he10 = NewHalfEdge();
 
-	auto he01 = e01->HalfEdge();
-	auto he10 = he01->Pair();
+	e01->SetHalfEdge(he01);
+
+	he01->SetNext(he1);
+	he0Pre->SetNext(he01);
+	he01->SetPair(he10);
+	he01->SetOrigin(v0);
+	he01->SetEdge(e01);
+	
+	he10->SetNext(he0);
+	he1Pre->SetNext(he10);
+	he10->SetPair(he01);
+	he10->SetOrigin(v1);
+	he10->SetEdge(e01);
+
 	he0Loop.push_back(he10);
 	he1Loop.push_back(he01);
 
 	if (!P::IsBoundary(p)) {
-		RemovePolygon(p);
 		AddPolygon(he0Loop);
 		AddPolygon(he1Loop);
 	}
@@ -449,5 +504,31 @@ const Ptr<typename V::E_t> HEMesh<V, _0, _1, _2>::ConnectVertex(Ptr<HE> he0, Ptr
 
 template<typename V, typename _0, typename _1, typename _2>
 const Ptr<V> HEMesh<V, _0, _1, _2>::CollapseEdge(Ptr<E> e) {
-	return nullptr;
+	auto v0 = e->HalfEdge()->Origin();
+	auto v1 = e->HalfEdge()->End();
+	if (v0->Degree() == 1 && v1->Degree() == 1) {
+		RemoveEdge(e);
+		return AddVertex();
+	}
+
+	// on bounding polygon
+	auto he = v0->Degree() > 1 ? e->HalfEdge()->RotateNext()->Pair()->Pre() : e->HalfEdge()->Next()->Pair()->Pre();
+
+	vector<Ptr<HE>> hes; // origin is adjacent vertex of edge endpointsw
+	for (auto outHE : e->AdjOutHEs()) { // AdjOutEnds isn't empty
+		if (outHE->Next()->End() == v0 || outHE->Next()->End() == v1)
+			continue;
+		hes.push_back(outHE->Next());
+	}
+
+	RemoveVertex(v0);
+	RemoveVertex(v1);
+
+	auto p = AddPolygon(he->Loop());
+	auto v = AddPolygonVertex(hes[0]);
+
+	for (size_t i = 1; i < hes.size(); i++)
+		ConnectVertex(v->HalfEdge(), hes[i]);
+
+	return v;
 }

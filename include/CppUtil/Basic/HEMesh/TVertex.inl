@@ -1,5 +1,5 @@
 template<typename V, typename E, typename P>
-const std::vector<Ptr<THalfEdge<V, E, P>>> TVertex<V, E, P>::AjdOutHEs() {
+const std::vector<Ptr<THalfEdge<V, E, P>>> TVertex<V, E, P>::AdjOutHEs() {
 	std::vector<Ptr<HE>> hes;
 	if (IsIsolated())
 		return hes;
@@ -15,14 +15,14 @@ const std::vector<Ptr<THalfEdge<V, E, P>>> TVertex<V, E, P>::AjdOutHEs() {
 template<typename V, typename E, typename P>
 const std::vector<Ptr<E>> TVertex<V, E, P>::AdjEdges() {
 	std::vector<Ptr<E>> edges;
-	for (auto he : AjdOutHEs())
+	for (auto he : AdjOutHEs())
 		edges.push_back(he->Edge());
 	return edges;
 }
 
 template<typename V, typename E, typename P>
 const Ptr<THalfEdge<V, E, P>> TVertex<V, E, P>::FindFreeIncident(){
-	for (auto outHE : AjdOutHEs()) {
+	for (auto outHE : AdjOutHEs()) {
 		auto inHE = outHE->Pair();
 		if (inHE->IsFree())
 			return inHE;
@@ -32,7 +32,7 @@ const Ptr<THalfEdge<V, E, P>> TVertex<V, E, P>::FindFreeIncident(){
 
 template<typename V, typename E, typename P>
 const Ptr<THalfEdge<V, E, P>> TVertex<V, E, P>::FindHalfEdge(Ptr<V> v0, Ptr<V> v1) {
-	for (auto he : v0->AjdOutHEs()) {
+	for (auto he : v0->AdjOutHEs()) {
 		if (he->End() == v1)
 			return he;
 	}
@@ -42,27 +42,24 @@ const Ptr<THalfEdge<V, E, P>> TVertex<V, E, P>::FindHalfEdge(Ptr<V> v0, Ptr<V> v
 template<typename V, typename E, typename P>
 const std::vector<Ptr<V>> TVertex<V, E, P>::AdjVertices() {
 	std::vector<Ptr<V>> adjVs;
-	for (auto he : AjdOutHEs())
+	for (auto he : AdjOutHEs())
 		adjVs.push_back(CastTo<V>(he->End()));
 	return adjVs;
 }
 
 template<typename V, typename E, typename P>
-bool TVertex<V, E, P>::IsConnected(PtrC<V> v0, PtrC<V> v1) {
-	if (v0 == nullptr || v1 == nullptr)
-		return false;
-
-	for (auto adjV : v0->AdjVertices()) {
-		if (adjV == v1)
-			return true;
+const Ptr<E> TVertex<V, E, P>::EdgeBetween(Ptr<V> v0, Ptr<V> v1) {
+	for (auto outHE : v0->AdjOutHEs()) {
+		if (outHE->End() == v1)
+			return outHE->Edge();
 	}
 
-	return false;
+	return nullptr;
 }
 
 template<typename V, typename E, typename P>
 bool TVertex<V, E, P>::IsBoundary() const {
-	for (auto he : AjdOutHEs()) {
+	for (auto he : AdjOutHEs()) {
 		if (he->IsBoundary())
 			return true;
 	}

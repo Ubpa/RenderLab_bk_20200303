@@ -22,17 +22,10 @@ namespace CppUtil {
 
 			static bool IsBoundary(Ptr<TPolygon> p) { return p == nullptr; }
 			
-			// [return] the first halfedge whose origin is v form this.halfedge
-			const Ptr<HE> HalfEdge(Ptr<V> v);
-			// [begin, end)
-			const std::vector<Ptr<HE>> BoundaryHEs(Ptr<HE> begin, Ptr<HE> end);
-			const std::vector<Ptr<HE>> BoundaryHEs() { return BoundaryHEs(HalfEdge(), HalfEdge()); }
-			const std::vector<PtrC<HE>> BoundaryHEs() const { return Const(const_cast<TPolygon*>(this)->BoundaryHEs()); }
-			size_t Degree() const { return static_cast<int>(BoundaryHEs().size()); }
+			const std::vector<Ptr<HE>> BoundaryHEs() { return HalfEdge()->Loop(); }
+			size_t Degree() const { return static_cast<int>(const_cast<TPolygon*>(this)->BoundaryHEs().size()); }
 			const std::vector<Ptr<E>> BoundaryEdges();
-			const std::vector<PtrC<E>> BoundaryEdges() const { return Const(const_cast<TPolygon*>(this)->BoundaryEdges()); }
 			const std::vector<Ptr<V>> BoundaryVertice();
-			const std::vector<PtrC<V>> BoundaryVertice() const { return Const(const_cast<TPolygon*>(this)->BoundaryVertice()); }
 
 		private:
 			WPtr<THalfEdge<V, E, P>> halfEdge;

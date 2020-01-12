@@ -7,7 +7,7 @@ const Ptr<THalfEdge<V,E,P>> THalfEdge<V, E, P>::Pre() {
 }
 
 template<typename V, typename E, typename P>
-Ptr<THalfEdge<V,E,P>> THalfEdge<V, E, P>::FindFreeIncident(Ptr<THalfEdge> begin, Ptr<THalfEdge> end) {
+const Ptr<THalfEdge<V,E,P>> THalfEdge<V, E, P>::FindFreeIncident(Ptr<THalfEdge> begin, Ptr<THalfEdge> end) {
 	assert(begin->End() == end->End());
 
 	for (auto he = begin; he != end; he = he->Next()->Pair()) {
@@ -49,4 +49,12 @@ const std::vector<Ptr<THalfEdge<V,E,P>>> THalfEdge<V, E, P>::Between(Ptr<THalfEd
 		he = he->Next();
 	} while (he != end);
 	return hes;
+}
+
+template<typename V, typename E, typename P>
+const Ptr<THalfEdge<V, E, P>> THalfEdge<V, E, P>::NextAt(Ptr<V> origin) {
+	auto he = This<THalfEdge>();
+	while (he->Origin() != origin)
+		he = he->Next();
+	return he;
 }

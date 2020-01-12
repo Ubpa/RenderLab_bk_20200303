@@ -25,8 +25,8 @@ namespace CppUtil {
 
 			bool IsIsolated() const { return halfEdge.expired(); }
 
-			const std::vector<Ptr<HE>> AjdOutHEs();
-			const std::vector<PtrC<HE>> AjdOutHEs() const { return Const(const_cast<TVertex*>(this)->AjdOutHEs()); }
+			const std::vector<Ptr<HE>> AdjOutHEs();
+			const std::vector<PtrC<HE>> AdjOutHEs() const { return Const(const_cast<TVertex*>(this)->AdjOutHEs()); }
 
 			const std::vector<Ptr<E>> AdjEdges();
 			const std::vector<PtrC<HE>> AdjEdges() const { return Const(const_cast<TVertex*>(this)->AdjEdges()); }
@@ -39,11 +39,14 @@ namespace CppUtil {
 			const std::vector<Ptr<V>> AdjVertices();
 			const std::vector<PtrC<V>> AdjVertices() const { return Const<std::vector, V>(const_cast<TVertex*>(this)->AdjVertices()); }
 
-			static bool IsConnected(PtrC<V> v0, PtrC<V> v1);
-			bool IsConnectedWith(PtrC<V> v) const { return IsConnected(This<V>(), v); }
+			static const Ptr<E> EdgeBetween(Ptr<V> v0, Ptr<V> v1);
+			const Ptr<E> EdgeWith(Ptr<V> v) { return EdgeBetween(This<V>(), v); }
+
+			static bool IsConnected(Ptr<V> v0, Ptr<V> v1) { return EdgeBetween(v0, v1) != nullptr; }
+			bool IsConnectedWith(Ptr<V> v) const { return IsConnected(This<V>(), v); }
 			bool IsBoundary() const;
 
-			size_t Degree() const { return AjdOutHEs().size(); }
+			size_t Degree() const { return AdjOutHEs().size(); }
 
 		protected:
 			virtual ~TVertex() = default;

@@ -37,13 +37,15 @@ namespace CppUtil {
 
 			bool IsFree() const { return polygon.expired(); }
 			bool IsBoundary() const { return polygon.expired(); }
-			static Ptr<THalfEdge> FindFreeIncident(Ptr<THalfEdge> begin, Ptr<THalfEdge> end);
+			static const Ptr<THalfEdge> FindFreeIncident(Ptr<THalfEdge> begin, Ptr<THalfEdge> end);
 			static bool MakeAdjacent(Ptr<THalfEdge> inHE, Ptr<THalfEdge> outHE);
 
 			// [begin, end), if begin == end, return a loop
 			static const std::vector<Ptr<THalfEdge>> Between(Ptr<THalfEdge> begin, Ptr<THalfEdge> end);
 			// [this, end), Between(this, end);
 			const std::vector<Ptr<THalfEdge>> NextTo(Ptr<THalfEdge> end) { return Between(This<THalfEdge>(), end); }
+			// this, this.next, ..., **[origin=>?]**, ...
+			const Ptr<THalfEdge> NextAt(Ptr<V> origin);
 			// [this, this), Between(this, this), a loop from this to this
 			const std::vector<Ptr<THalfEdge>> Loop() { return Between(This<THalfEdge>(), This<THalfEdge>()); }
 
