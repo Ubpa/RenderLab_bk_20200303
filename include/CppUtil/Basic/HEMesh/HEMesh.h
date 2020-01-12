@@ -48,7 +48,12 @@ namespace CppUtil {
 			const std::vector<std::vector<Ptr<HE>>> Boundaries();
 			size_t NumBoundaries() const { return const_cast<HEMesh*>(this)->Boundaries().size(); }
 			bool IsTriMesh() const;
+			// vertices empty => halfedges, edges and polygons empty
+			bool IsEmpty() const { return vertices.empty(); }
 
+			// min is 0
+			bool Init(std::vector<std::vector<size_t>> polygons);
+			bool Init(std::vector<size_t> polygons, size_t sides);
 			void Clear();
 			void Reserve(size_t n);
 

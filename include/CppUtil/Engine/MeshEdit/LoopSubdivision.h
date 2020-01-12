@@ -12,7 +12,7 @@ namespace CppUtil {
 
 		class LoopSubdivision : public Basic::HeapObj {
 		public:
-			LoopSubdivision(Basic::Ptr<TriMesh> triMesh) { Init(triMesh); }
+			LoopSubdivision(Basic::Ptr<TriMesh> triMesh);
 
 		public:
 			static const Basic::Ptr<LoopSubdivision> New(Basic::Ptr<TriMesh> triMesh) {
@@ -44,7 +44,7 @@ namespace CppUtil {
 			class P :public Basic::TPolygon<V, E, P> { };
 		private:
 			Basic::Ptr<TriMesh> triMesh;
-			Basic::Ptr<Basic::HEMesh<V>> heMesh;
+			const Basic::Ptr<Basic::HEMesh<V>> heMesh;
 		};
 	}
 }

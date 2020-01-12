@@ -13,7 +13,7 @@ namespace CppUtil {
 
 		class MinSurf : public Basic::HeapObj {
 		public:
-			MinSurf(Basic::Ptr<TriMesh> triMesh) { Init(triMesh); }
+			MinSurf(Basic::Ptr<TriMesh> triMesh);
 		public:
 			static const Basic::Ptr<MinSurf> New(Basic::Ptr<TriMesh> triMesh) {
 				return Basic::New<MinSurf>(triMesh);
@@ -38,9 +38,10 @@ namespace CppUtil {
 			class E : public Basic::TEdge<V, E, P> { };
 			class P :public Basic::TPolygon<V, E, P> { };
 		private:
+			friend class Paramaterize;
+
 			Basic::Ptr<TriMesh> triMesh;
-			Basic::Ptr<Basic::HEMesh<V>> heMesh; // vertice order is same with triMesh
-			friend Paramaterize;
+			const Basic::Ptr<Basic::HEMesh<V>> heMesh; // vertice order is same with triMesh
 		};
 	}
 }

@@ -38,9 +38,9 @@ bool Paramaterize::Init(Ptr<TriMesh> triMesh) {
 }
 
 bool Paramaterize::Run() {
-	if (!minSurf->heMesh || !minSurf->triMesh) {
+	if (minSurf->heMesh->IsEmpty() || !minSurf->triMesh) {
 		printf("ERROR::Paramaterize::Run:\n"
-			"\t""!minSurf->heMesh || !minSurf->triMesh\n");
+			"\t""minSurf->heMesh->IsEmpty() || !minSurf->triMesh\n");
 		return false;
 	}
 

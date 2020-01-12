@@ -324,6 +324,74 @@ bool HEMesh<V, _0, _1, _2>::RotateEdge(Ptr<E> e) {
 }
 
 template<typename V, typename _0, typename _1, typename _2>
+bool HEMesh<V, _0, _1, _2>::Init(std::vector<std::vector<size_t>> polygons) {
+	Clear();
+
+	if (polygons.empty()) {
+		printf("WARNNING::HEMesh::Init\n"
+			"\t""polygons is empty\n");
+		return false;
+	}
+	
+	size_t max = 0;
+	size_t min = SIZE_MAX;
+	for (const auto& polygon : polygons) {
+		if (polygon.size() <= 2) {
+			printf("ERROR::HEMesh::Init\n"
+				"\t""polygon's size <= 2\n");
+			return false;
+		}
+
+		for (auto idx : polygon) {
+			if (idx > max)
+				max = idx;
+			if (idx < min)
+				min = idx;
+		}
+	}
+
+	if (min != 0) {
+		printf("ERROR::HEMesh::Init\n"
+			"\t""min idx != 0\n");
+		return false;
+	}
+
+	for (size_t i = 0; i <= max; i++)
+		NewVertex();
+
+	for (auto polygon : polygons) {
+		vector<Ptr<HE>> heLoop;
+		for (size_t i = 0; i < polygon.size(); i++) {
+			size_t next = (i + 1) % polygon.size();
+			auto u = vertices[polygon[i]];
+			auto v = vertices[polygon[next]];
+			auto he = V::FindHalfEdge(u, v);
+			if (!he)
+				he = AddEdge(u, v)->HalfEdge();
+			heLoop.push_back(he);
+		}
+		AddPolygon(heLoop);
+	}
+
+	return true;
+}
+
+template<typename V, typename _0, typename _1, typename _2>
+bool HEMesh<V, _0, _1, _2>::Init(std::vector<size_t> polygons, size_t sides) {
+	if (polygons.size() % sides != 0) {
+		printf("ERROR::HEMesh::Init:\n"
+		"\t""polygons.size() isn't an integer multiple of sides\n")
+	}
+	std::vector<std::vector<size_t>> arrangedPolygons;
+	for (size_t i = 0; i < polygons.size(); i += sides) {
+		arrangedPolygons.emplace_back();
+		for (size_t j = 0; j < sides; j++)
+			arrangedPolygons.back().push_back(polygons[i + j]);
+	}
+	return Init(arrangedPolygons);
+}
+
+template<typename V, typename _0, typename _1, typename _2>
 void HEMesh<V, _0, _1, _2>::Clear() {
 	vertices.clear();
 	halfEdges.clear();

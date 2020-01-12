@@ -18,15 +18,15 @@ using namespace CppUtil::Basic;
 using namespace CppUtil::Engine;
 using namespace std;
 
+LoopSubdivision::LoopSubdivision(Basic::Ptr<TriMesh> triMesh)
+	: heMesh(HEMesh<V>::New()) { Init(triMesh); }
+
 void LoopSubdivision::Clear() {
 	triMesh = nullptr;
-	heMesh = nullptr;
+	heMesh->Clear();
 }
 
 bool LoopSubdivision::Init(Basic::Ptr<TriMesh> triMesh) {
-	if (triMesh == this->triMesh)
-		return true;
-
 	Clear();
 
 	if (triMesh->GetType() == TriMesh::INVALID) {
@@ -36,35 +36,22 @@ bool LoopSubdivision::Init(Basic::Ptr<TriMesh> triMesh) {
 	}
 
 	size_t nV = triMesh->GetPositions().size();
-	size_t nF = triMesh->GetTriangles().size();
-	heMesh = HEMesh<V>::New();
+	vector<vector<size_t>> triangles;
+	triangles.reserve(triMesh->GetTriangles().size());
+	for (auto triangle : triMesh->GetTriangles())
+		triangles.push_back({ triangle->idx[0], triangle->idx[1], triangle->idx[2] });
 	heMesh->Reserve(nV);
-	for (int i = 0; i < nV; i++) {
-		auto v = heMesh->AddVertex();
-		v->pos = triMesh->GetPositions()[i];
-	}
+	heMesh->Init(triangles);
 
-	auto & vertice = heMesh->Vertices();
-	for (auto f : triMesh->GetTriangles()) {
-		auto v0 = vertice[f->idx[0]];
-		auto v1 = vertice[f->idx[1]];
-		auto v2 = vertice[f->idx[2]];
-		auto he01 = V::FindHalfEdge(v0, v1);
-		auto he12 = V::FindHalfEdge(v1, v2);
-		auto he20 = V::FindHalfEdge(v2, v0);
-		if (!he01)
-			he01 = heMesh->AddEdge(v0, v1)->HalfEdge();
-		if (!he12)
-			he12 = heMesh->AddEdge(v1, v2)->HalfEdge();
-		if (!he20)
-			he20 = heMesh->AddEdge(v2, v0)->HalfEdge();
-		heMesh->AddPolygon({ he01,he12,he20 });
+	for (int i = 0; i < nV; i++) {
+		auto v = heMesh->Vertices().at(i);
+		v->pos = triMesh->GetPositions()[i];
 	}
 
 	if (!heMesh->IsTriMesh() || heMesh->HaveBoundary()) {
 		printf("ERROR::LoopSubdivision::Init:\n"
 			"\t""trimesh is not a triangle mesh or has boundaries\n");
-		this->heMesh = nullptr;
+		heMesh->Clear();
 		return false;
 	}
 
@@ -73,9 +60,9 @@ bool LoopSubdivision::Init(Basic::Ptr<TriMesh> triMesh) {
 }
 
 bool LoopSubdivision::Run(size_t n){
-	if (!heMesh || !triMesh) {
+	if (heMesh->IsEmpty() || !triMesh) {
 		printf("ERROR::LoopSubdivision::Run\n"
-			"\t""!heMesh || !triMesh\n");
+			"\t""heMesh->IsEmpty() || !triMesh\n");
 		return false;
 	}
 
