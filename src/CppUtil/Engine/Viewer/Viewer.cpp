@@ -3,6 +3,7 @@
 #include <CppUtil/Engine/DirectIllumRaster.h>
 #include <CppUtil/Engine/DeferredRaster.h>
 #include <CppUtil/Engine/ForwardNPR.h>
+#include <CppUtil/Engine/WireframeRaster.h>
 
 #include <CppUtil/Engine/Roamer.h>
 #include "Picker.h"
@@ -54,6 +55,9 @@ void Viewer::SetRaster(RasterType rasterType) {
 		break;
 	case RasterType::ForwardNPR:
 		raster = ForwardNPR::New(pOGLW, scene, roamer->GetCamera());
+		break;
+	case RasterType::WireframeRaster:
+		raster = WireframeRaster::New(pOGLW, scene, roamer->GetCamera());
 		break;
 	default:
 		printf("ERROR::Viewer::Viewer:\n"

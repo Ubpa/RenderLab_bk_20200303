@@ -46,6 +46,13 @@
     - 圆盘光源 DiskLight
 - 离线渲染
   - 路径追踪 PathTracing
+- 网格编辑
+  - 参数化 Paramaterization
+  - 粘合 Glue
+  - 变形 DeformRBF
+  - 极小曲面 MinSurf
+  - 各向同性网格重划分 IsotropicRemeshing
+  - Loop 细分 LoopSubdivision
 - 其他功能
   - [几何数学库 UGM](https://github.com/Ubpa/RenderLab/tree/master/include/CppUtil/Basic/UGM) 
   - AI 降噪 OptixAIDenoiser
@@ -185,6 +192,7 @@ Optix: 6.0
 - [x] 极小化曲面
 - [x] 参数化
 - [x] 空间场平滑插值 RBF
+- [ ] 释放 OpenGL 资源
 
 ### Unimportant
 

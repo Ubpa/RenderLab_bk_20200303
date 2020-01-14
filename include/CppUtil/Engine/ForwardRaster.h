@@ -37,6 +37,7 @@ namespace CppUtil {
 		class BSDF_CookTorrance;
 		class BSDF_MetalWorkflow;
 		class BSDF_FrostedGlass;
+		class BSDF_Frostbite;
 		class Gooch;
 
 		class ForwardRaster : public Raster {
@@ -58,14 +59,18 @@ namespace CppUtil {
 			virtual void Visit(Basic::Ptr<SObj> sobj);
 
 			// SetCurShader for Primitive
-			virtual void Visit(Basic::Ptr<BSDF_Diffuse> bsdf) { curShader = shader_basic; }
-			virtual void Visit(Basic::Ptr<BSDF_Glass> bsdf) { curShader = shader_basic; }
-			virtual void Visit(Basic::Ptr<BSDF_Mirror> bsdf) { curShader = shader_basic; }
-			virtual void Visit(Basic::Ptr<BSDF_Emission> bsdf) { curShader = shader_basic; }
-			virtual void Visit(Basic::Ptr<BSDF_CookTorrance> bsdf) { curShader = shader_basic; }
-			virtual void Visit(Basic::Ptr<BSDF_MetalWorkflow> bsdf) { curShader = shader_basic; }
-			virtual void Visit(Basic::Ptr<BSDF_FrostedGlass> bsdf) { curShader = shader_basic; }
-			virtual void Visit(Basic::Ptr<Gooch> gooch) { curShader = shader_basic; }
+			virtual void Visit(Basic::Ptr<BSDF_Diffuse> bsdf);
+			virtual void Visit(Basic::Ptr<BSDF_Glass> bsdf);
+			virtual void Visit(Basic::Ptr<BSDF_Mirror> bsdf);
+			virtual void Visit(Basic::Ptr<BSDF_Emission> bsdf);
+			virtual void Visit(Basic::Ptr<BSDF_CookTorrance> bsdf);
+			virtual void Visit(Basic::Ptr<BSDF_MetalWorkflow> bsdf);
+			virtual void Visit(Basic::Ptr<BSDF_FrostedGlass> bsdf);
+			virtual void Visit(Basic::Ptr<BSDF_Frostbite> bsdf);
+			virtual void Visit(Basic::Ptr<Gooch> gooch);
+
+		protected:
+			void SetDrawSky(bool drawSky) { this->drawSky = drawSky; }
 
 		private: // no need to change
 			/*virtual */void Visit(Basic::Ptr<Sphere> sphere);
@@ -95,6 +100,8 @@ namespace CppUtil {
 
 			struct ShaderCompare { bool operator()(const OpenGL::Shader & lhs, const OpenGL::Shader & rhs) const; };
 			std::map<OpenGL::Shader, int, ShaderCompare> shader2depthmapBase;
+
+			bool drawSky = true;
 		};
 	}
 }

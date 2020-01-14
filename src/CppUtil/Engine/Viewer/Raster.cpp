@@ -102,6 +102,8 @@ void Raster::Init() {
 	glBufferData(GL_UNIFORM_BUFFER, 400, NULL, GL_DYNAMIC_DRAW);
 	glBindBufferBase(GL_UNIFORM_BUFFER, 8, capsuleLightsUBO);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 void Raster::UpdateUBO() {

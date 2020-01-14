@@ -212,7 +212,8 @@ void RenderLab::InitSetting() {
 	setting->AddTitle("[ Viewer ]");
 	Grid::pSlotMap slotmap = std::make_shared<Grid::SlotMap>();
 	(*slotmap)["Deferred"] = [this]() {viewer->SetRaster(RasterType::DeferredPipeline); };
-	(*slotmap)["Direct"] = [this]() {viewer->SetRaster(RasterType::DeferredPipeline); };
+	(*slotmap)["Direct"] = [this]() {viewer->SetRaster(RasterType::DirectIllum); };
 	(*slotmap)["ForwardNPR"] = [this]() {viewer->SetRaster(RasterType::ForwardNPR); };
+	(*slotmap)["Wireframe"] = [this]() {viewer->SetRaster(RasterType::WireframeRaster); };
 	setting->AddComboBox("Raster Type", "Deferred", slotmap);
 }

@@ -84,6 +84,7 @@ ForwardRaster::ForwardRaster(RawAPI_OGLW * pOGLW, Ptr<Scene> scene, Ptr<Camera> 
 	RegMemberFunc<BSDF_CookTorrance>(&ForwardRaster::Visit);
 	RegMemberFunc<BSDF_MetalWorkflow>(&ForwardRaster::Visit);
 	RegMemberFunc<BSDF_FrostedGlass>(&ForwardRaster::Visit);
+	RegMemberFunc<BSDF_Frostbite>(&ForwardRaster::Visit);
 	RegMemberFunc<Gooch>(&ForwardRaster::Visit);
 }
 
@@ -102,7 +103,8 @@ void ForwardRaster::Draw() {
 	modelVec.push_back(Transform(1.f));
 	scene->GetRoot()->Accept(This());
 
-	DrawEnvironment();
+	if(drawSky)
+		DrawEnvironment();
 }
 
 void ForwardRaster::Init() {
@@ -118,7 +120,7 @@ void ForwardRaster::InitShaders() {
 
 void ForwardRaster::InitShader_Basic() {
 	shader_basic = Shader(rootPath + str_Basic_P3_vs, rootPath + str_Basic_fs);
-
+	shader_basic.SetVec3f("color", Val3(1.f,1.f,1.f));
 	RegShader(shader_basic);
 }
 
@@ -278,4 +280,41 @@ void ForwardRaster::DrawEnvironment() {
 	shader_skybox.SetBool("needGamma", true);
 	pOGLW->GetVAO(ShapeType::Cube).Draw(shader_skybox);
 	glDepthFunc(GL_LESS);
+}
+
+void ForwardRaster::Visit(Ptr<BSDF_Diffuse> bsdf) {
+	curShader = shader_basic;
+	curShader.SetVec3f("color", bsdf->colorFactor);
+}
+void ForwardRaster::Visit(Ptr<BSDF_Glass> bsdf) {
+	curShader = shader_basic;
+	curShader.SetVec3f("color", bsdf->transmittance);
+}
+void ForwardRaster::Visit(Ptr<BSDF_Mirror> bsdf) {
+	curShader = shader_basic;
+	curShader.SetVec3f("color", bsdf->reflectance);
+}
+void ForwardRaster::Visit(Ptr<BSDF_Emission> bsdf) {
+	curShader = shader_basic;
+	curShader.SetVec3f("color", bsdf->color);
+}
+void ForwardRaster::Visit(Ptr<BSDF_CookTorrance> bsdf) {
+	curShader = shader_basic;
+	curShader.SetVec3f("color", bsdf->albedo);
+}
+void ForwardRaster::Visit(Ptr<BSDF_MetalWorkflow> bsdf) {
+	curShader = shader_basic;
+	curShader.SetVec3f("color", bsdf->colorFactor);
+}
+void ForwardRaster::Visit(Ptr<BSDF_FrostedGlass> bsdf) {
+	curShader = shader_basic;
+	curShader.SetVec3f("color", bsdf->colorFactor);
+}
+void ForwardRaster::Visit(Ptr<BSDF_Frostbite> bsdf) {
+	curShader = shader_basic;
+	curShader.SetVec3f("color", bsdf->colorFactor);
+}
+void ForwardRaster::Visit(Ptr<Gooch> gooch) {
+	curShader = shader_basic;
+	curShader.SetVec3f("color", gooch->colorFactor);
 }
