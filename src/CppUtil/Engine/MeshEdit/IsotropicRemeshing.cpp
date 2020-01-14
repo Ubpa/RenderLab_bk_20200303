@@ -78,9 +78,15 @@ bool IsotropicRemeshing::Run(size_t n) {
 		return false;
 	}
 
-	for (size_t i = 0; i < n; i++)
-		Kernel();
-
+	for (size_t i = 0; i < n; i++) {
+		bool success = Kernel();
+		if (!success) {
+			printf("ERROR::IsotropicRemeshing::Run\n"
+				"\t""run Kernel fail\n");
+			return false;
+		}
+	}
+	
 	if (!heMesh->IsTriMesh() || heMesh->HaveBoundary()) {
 		printf("ERROR::IsotropicRemeshing::Run\n"
 			"\t""!heMesh->IsTriMesh() || heMesh->HaveBoundary(), algorithm error\n");
@@ -105,19 +111,25 @@ bool IsotropicRemeshing::Run(size_t n) {
 	return true;
 }
 
-void IsotropicRemeshing::Kernel() {
+bool IsotropicRemeshing::Kernel() {
 	auto triNum = heMesh->NumPolygons();
 	// 1. mean of edges length
 	printf("1. mean of edges length\n");
 	float meanLen = 0.f;
-	for (auto e : heMesh->Edges())
+	for (auto e : heMesh->Edges()) {
+		if (!e->IsValid())
+			return false;
 		meanLen += e->Length();
+	}
 
 	meanLen /= heMesh->NumEdges();
 
 	// 2. spilt edges with length > 4/3 meanLen
 	printf("2. spilt edges with length > 4/3 meanLen\n");
 	for (auto e : vector<Ptr<E>>(heMesh->Edges().begin(), heMesh->Edges().end())) {
+		if (!e->IsValid())
+			return false;
+
 		if (e->Length() > 4.f / 3.f * meanLen) {
 			auto centroid = e->Centroid();
 			auto v = heMesh->SpiltEdge(e);
@@ -134,6 +146,9 @@ void IsotropicRemeshing::Kernel() {
 		if (e->HalfEdge() == nullptr)
 			continue;
 
+		if (!e->IsValid())
+			return false;
+
 		if (e->Length() < 0.8f * meanLen) {
 			auto centroid = e->Centroid();
 			auto v = heMesh->CollapseEdge(e);
@@ -147,6 +162,16 @@ void IsotropicRemeshing::Kernel() {
 	const int D = 6; // balance degree
 	for (auto e : heMesh->Edges()) {
 		auto he01 = e->HalfEdge();
+
+		if (!e->IsValid() || !he01 || !he01->Origin()
+			|| !he01->Pair() || !he01->End()
+			|| !he01->Next() || !he01->Next()->Pair() || !he01->Next()->End()
+			|| !he01->Pair() || !he01->Pair()->Next() || !he01->Pair()->Next()->Pair() || !he01->Pair()->Next()->End()
+			) {
+			printf("ERROR::IsotropicRemeshing::Kernel:\n"
+				"\t""[flip] nullptr\n");
+			return false;
+		}
 
 		auto v0d = static_cast<int>(he01->Origin()->Degree());
 		if (v0d == 3)
@@ -189,10 +214,12 @@ void IsotropicRemeshing::Kernel() {
 	printf("6. tangential smoothing\n");
 	const float w = 0.1f;
 	for (auto v : heMesh->Vertices()) {
-#if NDEBUG
-		if (v->IsIsolated())
-			continue;
-#endif
+		if (v->IsIsolated()) {
+			printf("ERROR::IsotropicRemeshing::Kernel:\n"
+				"\t""[6. tangential smoothing] v is isolated\n");
+			return false;
+		}
+
 		// offset
 		Vec3 adjVCentroid;
 		auto adjVs = v->AdjVertices();
@@ -218,4 +245,6 @@ void IsotropicRemeshing::Kernel() {
 #endif
 		v->pos = v->newPos;
 	}
+
+	return true;
 }

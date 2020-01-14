@@ -347,9 +347,9 @@ bool HEMesh<V, _0, _1, _2>::Init(std::vector<std::vector<size_t>> polygons) {
 		for (size_t i = 0; i < polygon.size(); i++) {
 			size_t next = (i + 1) % polygon.size();
 			if (polygon[i] == polygon[next]) {
-				printf("ERROR::HEMesh::Init\n"
+				printf("WARNNING::HEMesh::Init\n"
 					"\t""same idx (%zd)\n", polygon[i]);
-				return false;
+				continue;
 			}
 			auto u = vertices[polygon[i]];
 			auto v = vertices[polygon[next]];
@@ -361,14 +361,11 @@ bool HEMesh<V, _0, _1, _2>::Init(std::vector<std::vector<size_t>> polygons) {
 		auto p = AddPolygon(heLoop);
 
 		if (p == nullptr) {
-			Clear();
 			string polygonStr;
 			for (auto idx : polygon)
 				polygonStr += to_string(idx) + ", ";
-			printf("ERROR::HEMesh::Init\n"
+			printf("WARNNING::HEMesh::Init\n"
 				"\t""AddPolygon fail (%s)\n", polygonStr.c_str());
-
-			return false;
 		}
 	}
 

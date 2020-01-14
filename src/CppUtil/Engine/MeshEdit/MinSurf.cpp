@@ -24,6 +24,9 @@ void MinSurf::Clear() {
 bool MinSurf::Init(Basic::Ptr<TriMesh> triMesh) {
 	Clear();
 
+	if (triMesh == nullptr)
+		return true;
+
 	if (triMesh->GetType() == TriMesh::INVALID) {
 		printf("ERROR::MinSurf::Init:\n"
 			"\t""trimesh is invalid\n");

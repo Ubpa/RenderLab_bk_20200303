@@ -28,6 +28,8 @@ void LoopSubdivision::Clear() {
 
 bool LoopSubdivision::Init(Basic::Ptr<TriMesh> triMesh) {
 	Clear();
+	if (triMesh == nullptr)
+		return true;
 
 	if (triMesh->GetType() == TriMesh::INVALID) {
 		printf("ERROR::LoopSubdivision::Init:\n"

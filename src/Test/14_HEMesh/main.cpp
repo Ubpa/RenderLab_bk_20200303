@@ -300,7 +300,8 @@ int main() {
 		Print(mesh);
 		auto e = V::EdgeBetween(mesh->Vertices().at(6), mesh->Vertices().at(8));
 		auto v = mesh->CollapseEdge(e);
-		v->name = "v10";
+		if (v != nullptr) // v should be nullptr
+			printf("v should be nullptr\n");
 		Print(mesh);
 	}
 
