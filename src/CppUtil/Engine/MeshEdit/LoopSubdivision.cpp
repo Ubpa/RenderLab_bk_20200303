@@ -41,7 +41,12 @@ bool LoopSubdivision::Init(Basic::Ptr<TriMesh> triMesh) {
 	for (auto triangle : triMesh->GetTriangles())
 		triangles.push_back({ triangle->idx[0], triangle->idx[1], triangle->idx[2] });
 	heMesh->Reserve(nV);
-	heMesh->Init(triangles);
+	auto initSuccess = heMesh->Init(triangles);
+	if (!initSuccess) {
+		printf("ERROR::LoopSubdivision::Init:\n"
+			"\t""HEMesh init fail\n");
+		return false;
+	}
 
 	for (int i = 0; i < nV; i++) {
 		auto v = heMesh->Vertices().at(i);
@@ -67,7 +72,7 @@ bool LoopSubdivision::Run(size_t n){
 	}
 
 	for (size_t i = 0; i < n; i++)
-		HEMeshSubdivision();
+		Kernel();
 
 	if (!heMesh->IsTriMesh() || heMesh->HaveBoundary()) {
 		printf("ERROR::LoopSubdivision::Run\n"
@@ -83,9 +88,9 @@ bool LoopSubdivision::Run(size_t n){
 	indice.reserve(3 * nF);
 	for (auto v : heMesh->Vertices())
 		positions.push_back(v->pos);
-	for (auto f : heMesh->Polygons()) {
-		for (auto v : f->BoundaryVertice())
-			indice.push_back(static_cast<uint>(heMesh->Index(v)));
+	for (auto triangle : heMesh->Export()) {
+		for (auto idx : triangle)
+			indice.push_back(static_cast<uint>(idx));
 	}
 	
 	triMesh->Init(indice, positions);
@@ -93,7 +98,7 @@ bool LoopSubdivision::Run(size_t n){
 	return true;
 }
 
-void LoopSubdivision::HEMeshSubdivision() {
+void LoopSubdivision::Kernel() {
 	// 1. update vertex pos
 	{
 		auto & vertices = heMesh->Vertices();

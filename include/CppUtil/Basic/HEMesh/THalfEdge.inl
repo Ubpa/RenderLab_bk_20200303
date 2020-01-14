@@ -41,7 +41,7 @@ bool THalfEdge<V, E, P>::MakeAdjacent(Ptr<THalfEdge> inHE, Ptr<THalfEdge> outHE)
 }
 
 template<typename V, typename E, typename P>
-const std::vector<Ptr<THalfEdge<V,E,P>>> THalfEdge<V, E, P>::Between(Ptr<THalfEdge> begin, Ptr<THalfEdge> end) {
+const std::vector<Ptr<THalfEdge<V,E,P>>> THalfEdge<V, E, P>::NextBetween(Ptr<THalfEdge> begin, Ptr<THalfEdge> end) {
 	std::vector<Ptr<THalfEdge<V, E, P>>> hes;
 	auto he = begin;
 	do {
@@ -52,9 +52,29 @@ const std::vector<Ptr<THalfEdge<V,E,P>>> THalfEdge<V, E, P>::Between(Ptr<THalfEd
 }
 
 template<typename V, typename E, typename P>
+const std::vector<Ptr<THalfEdge<V, E, P>>> THalfEdge<V, E, P>::RotateNextBetween(Ptr<THalfEdge> begin, Ptr<THalfEdge> end) {
+	std::vector<Ptr<THalfEdge<V, E, P>>> hes;
+	auto he = begin;
+	do {
+		hes.push_back(he);
+		he = he->RotateNext();
+	} while (he != end);
+	return hes;
+}
+
+template<typename V, typename E, typename P>
 const Ptr<THalfEdge<V, E, P>> THalfEdge<V, E, P>::NextAt(Ptr<V> origin) {
 	auto he = This<THalfEdge>();
 	while (he->Origin() != origin)
 		he = he->Next();
 	return he;
+}
+
+template<typename V, typename E, typename P>
+void THalfEdge<V, E, P>::Clear() {
+	next.reset();
+	pair.reset();
+	origin.reset();
+	edge.reset();
+	polygon.reset();
 }

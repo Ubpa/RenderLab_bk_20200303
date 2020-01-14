@@ -158,7 +158,7 @@ void TriMesh::Init_AfterGenPtr() {
 
 void TriMesh::GenNormals() {
 	normals.clear();
-	map<size_t, vector<Normalf>> map2wNVec; // map vertex idx to weighted normal vec
+	vector<Normalf> sWNs(positions.size()); // vector of sum weighted normal
 	for (size_t i = 0; i < indice.size(); i+=3) {
 		auto v0 = indice[i];
 		auto v1 = indice[i+1];
@@ -172,21 +172,14 @@ void TriMesh::GenNormals() {
 		auto d12 = pos2 - pos1;
 		auto wN = d12.Cross(d10);
 
-		map2wNVec[v0].push_back(wN);
-		map2wNVec[v1].push_back(wN);
-		map2wNVec[v2].push_back(wN);
+		sWNs[v0] += wN;
+		sWNs[v1] += wN;
+		sWNs[v2] += wN;
 	}
 
 	normals.resize(positions.size());
-	for (auto pair : map2wNVec) {
-		Normalf sumWN;
-		float sumW = 0.f;
-		for (auto wN : pair.second) {
-			sumWN += wN;
-			sumW += wN.Norm();
-		}
-		normals[pair.first] = sumWN / sumW;
-	}
+	for (size_t i = 0; i < positions.size(); i++)
+		normals[i] = sWNs[i].Normalize();
 }
 
 void TriMesh::GenTangents() {

@@ -7,6 +7,7 @@
 #include <CppUtil/Engine/MeshEdit/Glue.h>
 #include <CppUtil/Engine/MeshEdit/Paramaterize.h>
 #include <CppUtil/Engine/MeshEdit/DeformRBF.h>
+#include <CppUtil/Engine/MeshEdit/IsotropicRemeshing.h>
 
 #include <CppUtil/Qt/RawAPI_OGLW.h>
 
@@ -348,7 +349,7 @@ void Attribute::ComponentVisitor::Visit(Ptr<TriMesh> mesh) {
 	grid->AddButton("Paramaterize", [mesh, pOGLW = attr->pOGLW]() {
 		auto paramaterize = Paramaterize::New(mesh);
 		if (paramaterize->Run())
-			printf("Paramaterize done");
+			printf("Paramaterize done\n");
 		pOGLW->DirtyVAO(mesh);
 		
 	});
@@ -363,6 +364,17 @@ void Attribute::ComponentVisitor::Visit(Ptr<TriMesh> mesh) {
 			GS::Reg("canDeform", true);
 			printf("can deform now\n");
 		}
+	});
+
+	grid->AddButton("Isotropic Remeshing", [mesh, pOGLW = attr->pOGLW]() {
+		printf("[Isotropic Remeshing] start\n");
+		auto isotropicRemeshing = IsotropicRemeshing::New(mesh);
+		printf("[Isotropic Remeshing] init done\n");
+		if (isotropicRemeshing->Run(5))
+			printf("[Isotropic Remeshing] success\n");
+		else
+			printf("[Isotropic Remeshing] fail\n");
+		pOGLW->DirtyVAO(mesh);
 	});
 }
 

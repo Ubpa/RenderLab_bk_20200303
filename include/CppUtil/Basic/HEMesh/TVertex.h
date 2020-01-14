@@ -48,6 +48,8 @@ namespace CppUtil {
 
 			size_t Degree() const { return AdjOutHEs().size(); }
 
+			void Clear() { halfEdge.reset(); }
+
 		protected:
 			virtual ~TVertex() = default;
 

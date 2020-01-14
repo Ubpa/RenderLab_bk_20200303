@@ -11,6 +11,7 @@
 
 #include <assert.h>
 #include <set>
+#include <string>
 
 namespace CppUtil {
 	namespace Basic {
@@ -36,13 +37,14 @@ namespace CppUtil {
 			const std::vector<Ptr<P>> & Polygons() { return polygons.vec(); }
 
 			size_t NumVertices() const { return vertices.size(); }
-			size_t NumEdges() const { return halfEdges.size(); }
+			size_t NumEdges() const { return edges.size(); }
 			size_t NumPolygons() const { return polygons.size(); }
 			size_t NumHalfEdges() const { return halfEdges.size(); }
 
 			size_t Index(Ptr<V> v) const { return vertices.idx(v); }
 			size_t Index(Ptr<E> e) const { return edges.idx(e); }
 			size_t Index(Ptr<P> p) const { return polygons.idx(p); }
+			const std::vector<size_t> Indices(Ptr<P> p) const;
 
 			bool HaveBoundary() const;
 			const std::vector<std::vector<Ptr<HE>>> Boundaries();
@@ -56,6 +58,7 @@ namespace CppUtil {
 			bool Init(std::vector<size_t> polygons, size_t sides);
 			void Clear();
 			void Reserve(size_t n);
+			const std::vector<std::vector<size_t>> Export() const;
 
 			// -----------------
 			//  basic mesh edit
@@ -65,12 +68,12 @@ namespace CppUtil {
 			const Ptr<V> AddVertex(Args&& ... args) { return NewVertex(std::forward<Args>(args)...); }
 			// e's halfedge is form v0 to v1
 			template<typename ...Args>
-			const Ptr<E> AddEdge(Ptr<V> v0, Ptr<V> v1, Args&& ... args) { return _AddEdge(v0, v1, nullptr, std::forward<Args>(args)...); }
+			const Ptr<E> AddEdge(Ptr<V> v0, Ptr<V> v1, Args&& ... args);
 			// polygon's halfedge is heLoop[0]
 			template<typename ...Args>
 			const Ptr<P> AddPolygon(const std::vector<Ptr<HE>> heLoop, Args&& ... args);
 			void RemovePolygon(Ptr<P> polygon);
-			void RemoveEdge(Ptr<E> e) { RemoveEdge(e, true); }
+			void RemoveEdge(Ptr<E> e);
 			void RemoveVertex(Ptr<V> v);
 
 			// ----------------------
@@ -80,13 +83,18 @@ namespace CppUtil {
 			// delete e
 			const Ptr<V> SpiltEdge(Ptr<E> e);
 
-			// counter-clock, remain e in container
+			// counter-clock, remain e in container, won't break iteration
 			bool RotateEdge(Ptr<E> e);
 
 			// RemoveVertex and AddPolygon
 			const Ptr<P> EraseVertex(Ptr<V> v);
 
 			const Ptr<V> CollapseEdge(Ptr<E> e);
+
+			// edge's halfedge : v0=>v1
+			// nweV's halfedge : newV => v1
+			template<typename ...Args>
+			const Ptr<V> AddEdgeVertex(Ptr<E> e);
 
 			// add a vertex in he.polygon
 			// he.origin => new vertex => he.origin
@@ -107,11 +115,10 @@ namespace CppUtil {
 			// [require] p isn't boundary(nullptr)
 			const Ptr<E> ConnectVertex(Ptr<P> p, Ptr<V> v0, Ptr<V> v1) { return ConnectVertex(p->HalfEdge()->NextAt(v0), p->HalfEdge()->NextAt(v1)); }
 
-		private:
-			template<typename ...Args>
-			const Ptr<E> _AddEdge(Ptr<V> v0, Ptr<V> v1, Ptr<E> e, Args&& ... args);
-			void RemoveEdge(Ptr<E> e, bool needErase);
+			bool IsValid() const;
+			bool HaveIsolatedVertices() const;
 
+		private:
 			// new and insert
 			const Ptr<HE> NewHalfEdge();
 			template<typename ...Args>
@@ -120,12 +127,18 @@ namespace CppUtil {
 			const Ptr<E> NewEdge(Args&& ... args);
 			template<typename ...Args>
 			const Ptr<P> NewPolygon(Args&& ... args);
+
+			// clear and erase
+			void DeleteHalfEdge(Ptr<HE> he) { he->Clear(); halfEdges.erase(he); }
+			void DeleteVertex(Ptr<V> v) { v->Clear(); vertices.erase(v); }
+			void DeleteEdge(Ptr<E> e) { e->Clear(); edges.erase(e); }
+			void DeletePolygon(Ptr<P> p) { p->Clear(); polygons.erase(p); }
 		protected:
 			virtual ~HEMesh() = default;
 
 		private:
-			random_set<Ptr<V>> vertices;
 			random_set<Ptr<HE>> halfEdges;
+			random_set<Ptr<V>> vertices;
 			random_set<Ptr<E>> edges;
 			random_set<Ptr<P>> polygons;
 		};

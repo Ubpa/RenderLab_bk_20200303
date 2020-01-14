@@ -54,13 +54,12 @@ ostream & operator<< (ostream & os, Ptr<V> v) {
 }
 
 ostream & operator<< (ostream & os, Ptr<HEMesh<V>::HE> he) {
-	os << he->Origin() << "->" << he->End()
-		<< ", next " << he->Next()->Origin() << "->" << he->Next()->End()
-		<< ", pair " << he->Pair()->Origin() << "->" << he->Pair()->End();
+	os << he->Origin() << "->" << he->End();
 	return os;
 }
 
 void Print(Ptr<HEMesh<V>> mesh) {
+	cout << (mesh->IsValid() ? "[valid]" : "[not valid]") << endl;
 	cout << " V:" << mesh->Vertices().size() << endl;
 	for (auto v : mesh->Vertices())
 		cout << "    "<< v->name << endl;
@@ -77,6 +76,13 @@ void Print(Ptr<HEMesh<V>> mesh) {
 	for (auto p : mesh->Polygons())
 		cout << "    " << p->Name() << endl;
 
+	cout << " B:" << mesh->NumBoundaries() << endl;
+	for (auto b : mesh->Boundaries()) {
+		cout << "    ";
+		for (auto he : b)
+			cout << he->Origin() << "-";
+		cout << b.back()->End() << endl;
+	}
 	cout << endl;
 }
 
@@ -192,7 +198,7 @@ int main() {
 		mesh->RotateEdge(e02);
 		Print(mesh);
 	}
-
+	
 	// test collapse edge
 	{
 		cout
@@ -231,9 +237,70 @@ int main() {
 
 		Print(mesh);
 	
-		auto v6 = mesh->CollapseEdge(v4->EdgeWith(v5));
+		auto v6 = mesh->CollapseEdge(v0->EdgeWith(v3));
 		v6->name = "v6";
 
+		Print(mesh);
+	}
+
+	// test collapse edge 2
+	{
+		cout
+			<< "---------------------------" << endl
+			<< "    test CollapseEdge 2    " << endl
+			<< "---------------------------" << endl;
+
+		vector<vector<size_t>> indices;
+		indices.push_back({ 4, 5, 6, 17, 16 });
+		indices.push_back({ 10, 11, 12, 13, 14, 17 });
+		indices.push_back({ 14, 15, 16 });
+		indices.push_back({ 15, 0, 1, 16 });
+		indices.push_back({ 6, 7, 8, 17 });
+		indices.push_back({ 8, 9, 17 });
+		indices.push_back({ 9, 10, 17 });
+		indices.push_back({ 1, 2, 3, 4, 16 });
+		indices.push_back({ 14, 16, 17 });
+		auto mesh = HEMesh<V>::New();
+		mesh->Init(indices);
+		for (size_t i = 0; i <= 17; i++)
+			mesh->Vertices().at(i)->name = "v" + to_string(i);
+		Print(mesh);
+		auto e = V::EdgeBetween(mesh->Vertices().at(16), mesh->Vertices().at(17));
+		auto v = mesh->CollapseEdge(e);
+		v->name = "v18";
+		Print(mesh);
+	}
+
+	// test collapse edge 4
+	{
+		cout
+			<< "---------------------------" << endl
+			<< "    test CollapseEdge 4    " << endl
+			<< "---------------------------" << endl;
+
+		vector<vector<size_t>> indices;
+		indices.push_back({ 0, 1, 6 });
+		indices.push_back({ 1, 2, 6 });
+		indices.push_back({ 2, 7, 6 });
+		indices.push_back({ 2, 8, 7 });
+		indices.push_back({ 6, 7, 8 });
+		indices.push_back({ 2, 3, 8 });
+
+		indices.push_back({ 3, 4, 8 });
+		indices.push_back({ 4, 5, 8 });
+		indices.push_back({ 5, 9, 8 });
+		indices.push_back({ 5, 6, 9 });
+		indices.push_back({ 6, 8, 9 });
+		indices.push_back({ 5, 0, 6 });
+
+		auto mesh = HEMesh<V>::New();
+		mesh->Init(indices);
+		for (size_t i = 0; i <= 9; i++)
+			mesh->Vertices().at(i)->name = "v" + to_string(i);
+		Print(mesh);
+		auto e = V::EdgeBetween(mesh->Vertices().at(6), mesh->Vertices().at(8));
+		auto v = mesh->CollapseEdge(e);
+		v->name = "v10";
 		Print(mesh);
 	}
 

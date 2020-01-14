@@ -4,6 +4,7 @@
 
 #include <CppUtil/Basic/HeapObj.h>
 #include <vector>
+#include <set>
 
 namespace CppUtil {
 	namespace Basic {
@@ -25,9 +26,9 @@ namespace CppUtil {
 			// + [he.RotateNext, he.RotateNext.RotateNext, ..., he)
 			// + [he.next, he.next.RotateNext, ..., he.pair)
 			const std::vector<Ptr<THalfEdge<V, E, P>>> AdjOutHEs();
-
-			// AdjOutHEs.End
-			const std::vector<Ptr<V>> AdjVertices();
+			const std::set<Ptr<V>> AdjVertices();
+			const std::vector<Ptr<E>> AdjEdges();
+			void Clear() { halfEdge.reset(); }
 
 		private:
 			WPtr<THalfEdge<V, E, P>> halfEdge;

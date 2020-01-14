@@ -10,6 +10,10 @@ template<typename T, class Alloc = std::allocator<T>>
 class random_set {
 public:
 	void insert(const T & e) {
+		auto target = Tmap.find(e);
+		if (target != Tmap.end())
+			return;
+
 		Tmap[e] = Tvec.size();
 		Tvec.push_back(e);
 	}
@@ -19,7 +23,7 @@ public:
 		if (target == Tmap.end())
 			return;
 		auto eIdx = target->second;
-		if (eIdx != Tvec.size() - 1 && Tvec.size() > 1) {
+		if (eIdx != Tvec.size() - 1) {
 			Tmap[Tvec.back()] = eIdx;
 			Tvec[eIdx] = Tvec.back();
 		}
@@ -38,7 +42,7 @@ public:
 	size_t size() const { return Tvec.size(); }
 	void reserve(size_t n) {
 		Tvec.reserve(n);
-		Tmap.reserve(4*n);
+		Tmap.reserve(n);
 	}
 	void clear() {
 		Tvec.clear();
@@ -53,6 +57,10 @@ public:
 			return -1;
 		return target->second;
 	}
+
+	bool contains(const T & e) const { return Tmap.find(e) != Tmap.end(); }
+
+	bool empty() const { return Tvec.empty(); }
 private:
 	std::unordered_map<T, size_t> Tmap;
 	std::vector<T, Alloc> Tvec;

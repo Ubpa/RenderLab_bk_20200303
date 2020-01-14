@@ -27,6 +27,7 @@ namespace CppUtil {
 			const std::vector<Ptr<E>> BoundaryEdges();
 			const std::vector<Ptr<V>> BoundaryVertice();
 
+			void Clear() { halfEdge.reset(); }
 		private:
 			WPtr<THalfEdge<V, E, P>> halfEdge;
 		};

@@ -1,6 +1,5 @@
-#pragma once
-#ifndef _CPPUTIL_ENGINE_MESHEDIT_LOOP_SUBDIVISION_H_
-#define _CPPUTIL_ENGINE_MESHEDIT_LOOP_SUBDIVISION_H_
+#ifndef _CPPUTIL_ENGINE_MESHEDIT_ISOTROPICREMESHING_H_
+#define _CPPUTIL_ENGINE_MESHEDIT_ISOTROPICREMESHING_H_
 
 #include <CppUtil/Basic/HeapObj.h>
 #include <CppUtil/Basic/HEMesh/HEMesh.h>
@@ -10,13 +9,13 @@ namespace CppUtil {
 	namespace Engine {
 		class TriMesh;
 
-		class LoopSubdivision : public Basic::HeapObj {
+		class IsotropicRemeshing : public Basic::HeapObj {
 		public:
-			LoopSubdivision(Basic::Ptr<TriMesh> triMesh);
+			IsotropicRemeshing(Basic::Ptr<TriMesh> triMesh);
 
 		public:
-			static const Basic::Ptr<LoopSubdivision> New(Basic::Ptr<TriMesh> triMesh) {
-				return Basic::New<LoopSubdivision>(triMesh);
+			static const Basic::Ptr<IsotropicRemeshing> New(Basic::Ptr<TriMesh> triMesh) {
+				return Basic::New<IsotropicRemeshing>(triMesh);
 			}
 
 		public:
@@ -34,12 +33,12 @@ namespace CppUtil {
 			class V : public Basic::TVertex<V, E, P> {
 			public:
 				Vec3 pos;
-				bool isNew = false;
 				Vec3 newPos;
 			};
 			class E : public Basic::TEdge<V, E, P> {
 			public:
-				Vec3 newPos;
+				float Length() const { return (HalfEdge()->Origin()->pos - HalfEdge()->End()->pos).Norm(); }
+				Vec3 Centroid() const { return (HalfEdge()->Origin()->pos + HalfEdge()->End()->pos) / 2.f; }
 			};
 			class P :public Basic::TPolygon<V, E, P> { };
 		private:
@@ -49,4 +48,4 @@ namespace CppUtil {
 	}
 }
 
-#endif // !_CPPUTIL_ENGINE_MESHEDIT_LOOP_SUBDIVISION_H_
+#endif // !_CPPUTIL_ENGINE_MESHEDIT_ISOTROPICREMESHING_H_

@@ -19,6 +19,7 @@ namespace CppUtil {
 			const Ptr<V> End() { return pair.lock()->Origin(); }
 			const Ptr<THalfEdge> Pre();
 			const Ptr<THalfEdge> RotateNext() { return Pair()->Next(); }
+			const Ptr<THalfEdge> RotatePre() { return Pre()->Pair(); }
 
 			const PtrC<THalfEdge> Next() const { return const_cast<THalfEdge*>(this)->Next(); }
 			const PtrC<THalfEdge> Pair() const { return const_cast<THalfEdge*>(this)->Pair(); }
@@ -41,14 +42,19 @@ namespace CppUtil {
 			static bool MakeAdjacent(Ptr<THalfEdge> inHE, Ptr<THalfEdge> outHE);
 
 			// [begin, end), if begin == end, return a loop
-			static const std::vector<Ptr<THalfEdge>> Between(Ptr<THalfEdge> begin, Ptr<THalfEdge> end);
-			// [this, end), Between(this, end);
-			const std::vector<Ptr<THalfEdge>> NextTo(Ptr<THalfEdge> end) { return Between(This<THalfEdge>(), end); }
+			static const std::vector<Ptr<THalfEdge>> NextBetween(Ptr<THalfEdge> begin, Ptr<THalfEdge> end);
+			// [begin, end), if begin == end, return a loop
+			static const std::vector<Ptr<THalfEdge>> RotateNextBetween(Ptr<THalfEdge> begin, Ptr<THalfEdge> end);
+			// [this, end), NextBetween(this, end);
+			const std::vector<Ptr<THalfEdge>> NextTo(Ptr<THalfEdge> end) { return NextBetween(This<THalfEdge>(), end); }
+			// [this, end), RotateNextBetween(this, end);
+			const std::vector<Ptr<THalfEdge>> RotateNextTo(Ptr<THalfEdge> end) { return RotateNextBetween(This<THalfEdge>(), end); }
 			// this, this.next, ..., **[origin=>?]**, ...
 			const Ptr<THalfEdge> NextAt(Ptr<V> origin);
-			// [this, this), Between(this, this), a loop from this to this
-			const std::vector<Ptr<THalfEdge>> Loop() { return Between(This<THalfEdge>(), This<THalfEdge>()); }
+			// [this, this), NextBetween(this, this), a loop from this to this
+			const std::vector<Ptr<THalfEdge>> Loop() { return NextBetween(This<THalfEdge>(), This<THalfEdge>()); }
 
+			void Clear();
 		private:
 			WPtr<THalfEdge> next;
 			WPtr<THalfEdge> pair;

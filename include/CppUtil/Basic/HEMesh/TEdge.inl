@@ -10,9 +10,17 @@ const std::vector<Ptr<THalfEdge<V, E, P>>> TEdge<V, E, P>::AdjOutHEs() {
 }
 
 template<typename V, typename E, typename P>
-const std::vector<Ptr<V>> TEdge<V, E, P>::AdjVertices() {
-	std::vector<Ptr<V>> vertices;
+const std::set<Ptr<V>> TEdge<V, E, P>::AdjVertices() {
+	std::set<Ptr<V>> vertices;
 	for (auto e : AdjOutHEs())
-		vertices.push_back(e->End());
+		vertices.insert(e->End());
 	return vertices;
+}
+
+template<typename V, typename E, typename P>
+const std::vector<Ptr<E>> TEdge<V, E, P>::AdjEdges() {
+	std::vector<Ptr<E>> edges;
+	for (auto he : AdjOutHEs())
+		edges.push_back(he->Edge());
+	return edges;
 }
