@@ -24,7 +24,7 @@ namespace CppUtil {
 			bool Run(size_t n);
 
 		private:
-			bool Kernel();
+			bool Kernel(size_t n);
 
 		private:
 			class V;
@@ -37,17 +37,8 @@ namespace CppUtil {
 			};
 			class E : public Basic::TEdge<V, E, P> {
 			public:
-				float Length() const {
-					return (HalfEdge()->Origin()->pos - HalfEdge()->End()->pos).Norm();
-				}
-
-				Vec3 Centroid() const {
-					return (HalfEdge()->Origin()->pos + HalfEdge()->End()->pos) / 2.f;
-				}
-
-				bool IsValid() const {
-					return HalfEdge() && HalfEdge()->Origin() && HalfEdge()->Pair() && HalfEdge()->Pair()->Origin();
-				}
+				float Length() const { return (HalfEdge()->Origin()->pos - HalfEdge()->End()->pos).Norm(); }
+				Vec3 Centroid() const { return (HalfEdge()->Origin()->pos + HalfEdge()->End()->pos) / 2.f; }
 			};
 			class P :public Basic::TPolygon<V, E, P> { };
 		private:

@@ -78,13 +78,11 @@ bool IsotropicRemeshing::Run(size_t n) {
 		return false;
 	}
 
-	for (size_t i = 0; i < n; i++) {
-		bool success = Kernel();
-		if (!success) {
-			printf("ERROR::IsotropicRemeshing::Run\n"
-				"\t""run Kernel fail\n");
-			return false;
-		}
+	bool success = Kernel(n);
+	if (!success) {
+		printf("ERROR::IsotropicRemeshing::Run\n"
+			"\t""run Kernel fail\n");
+		return false;
 	}
 	
 	if (!heMesh->IsTriMesh() || heMesh->HaveBoundary()) {
@@ -111,139 +109,129 @@ bool IsotropicRemeshing::Run(size_t n) {
 	return true;
 }
 
-bool IsotropicRemeshing::Kernel() {
+bool IsotropicRemeshing::Kernel(size_t n) {
 	auto triNum = heMesh->NumPolygons();
 	// 1. mean of edges length
 	printf("1. mean of edges length\n");
-	float meanLen = 0.f;
-	for (auto e : heMesh->Edges()) {
-		if (!e->IsValid())
-			return false;
-		meanLen += e->Length();
-	}
+	float L = 0.f;
+	for (auto e : heMesh->Edges())
+		L += e->Length();
 
-	meanLen /= heMesh->NumEdges();
+	L /= heMesh->NumEdges();
+	float minL = 0.8f * L;
+	float maxL = 4.f / 3.f * L;
 
-	// 2. spilt edges with length > 4/3 meanLen
-	printf("2. spilt edges with length > 4/3 meanLen\n");
-	for (auto e : vector<Ptr<E>>(heMesh->Edges().begin(), heMesh->Edges().end())) {
-		if (!e->IsValid())
-			return false;
+	for (size_t i = 0; i < n; i++) {
+		{// 2. spilt edges with length > maxL
+			printf("2. spilt edges with length > maxL\n");
+			unordered_set<Ptr<E>> dEs(heMesh->Edges().begin(), heMesh->Edges().end()); // dynamic edges
+			while (dEs.size() > 0) {
+				auto iter = dEs.begin();
+				auto e = *iter;
+				dEs.erase(iter);
 
-		if (e->Length() > 4.f / 3.f * meanLen) {
-			auto centroid = e->Centroid();
-			auto v = heMesh->SpiltEdge(e);
-			v->pos = centroid;
-		}
-	}
+				if (e->Length() > maxL) {
+					auto centroid = e->Centroid();
+					auto v = heMesh->SpiltEdge(e);
+					v->pos = centroid;
 
-	// 3. collapse edges with length < 0.8 meanLen
-	printf("3. collapse edges with length < 0.8 meanLen\n");
-	for (auto e : vector<Ptr<E>>(heMesh->Edges().begin(), heMesh->Edges().end())) {
-		if (heMesh->NumPolygons() <= triNum)
-			break;
-
-		if (e->HalfEdge() == nullptr)
-			continue;
-
-		if (!e->IsValid())
-			return false;
-
-		if (e->Length() < 0.8f * meanLen) {
-			auto centroid = e->Centroid();
-			auto v = heMesh->CollapseEdge(e);
-			if (v != nullptr)
-				v->pos = centroid;
-		}
-	}
-
-	// 4. filp edges which can balance degree (6)
-	printf("4. filp edges which can balance degree (6)\n");
-	const int D = 6; // balance degree
-	for (auto e : heMesh->Edges()) {
-		auto he01 = e->HalfEdge();
-
-		if (!e->IsValid() || !he01 || !he01->Origin()
-			|| !he01->Pair() || !he01->End()
-			|| !he01->Next() || !he01->Next()->Pair() || !he01->Next()->End()
-			|| !he01->Pair() || !he01->Pair()->Next() || !he01->Pair()->Next()->Pair() || !he01->Pair()->Next()->End()
-			) {
-			printf("ERROR::IsotropicRemeshing::Kernel:\n"
-				"\t""[flip] nullptr\n");
-			return false;
+					for (auto adjE : v->AdjEdges())
+						dEs.insert(adjE);
+				}
+			}
 		}
 
-		auto v0d = static_cast<int>(he01->Origin()->Degree());
-		if (v0d == 3)
-			continue;
-		auto v1d = static_cast<int>(he01->End()->Degree());
-		if (v1d == 3)
-			continue;
-		auto v2d = static_cast<int>(he01->Next()->End()->Degree());
-		auto v3d = static_cast<int>(he01->Pair()->Next()->End()->Degree());
+		{// 3. collapse edges with length < minL
+			printf("3. collapse edges with length < minL\n");
+			unordered_set<Ptr<E>> dEs(heMesh->Edges().begin(), heMesh->Edges().end()); // dynamic edges
+			while (dEs.size() > 0) {
+				auto iter = dEs.begin();
+				auto e = *iter;
+				dEs.erase(iter);
 
-		int cost = abs(v0d - D) + abs(v1d - D) + abs(v2d - D) + abs(v3d - D);
-		int flipCost = abs(v0d - 1 - D) + abs(v1d - 1 - D) + abs(v2d + 1 - D) + abs(v3d + 1 - D);
-		if (flipCost < cost)
-			heMesh->RotateEdge(e);
-	}
+				if (e->HalfEdge() == nullptr)
+					continue;
 
-	// 5. vertex normal
-	printf("5. vertex normal\n");
-	const size_t nV = heMesh->NumVertices();
-	vector<Vec3> sWNs(nV); // sum weighted normals
-	for (auto triangle : heMesh->Export()) {
-		auto v0 = triangle[0];
-		auto v1 = triangle[1];
-		auto v2 = triangle[2];
-
-		auto pos0 = heMesh->Vertices().at(v0)->pos;
-		auto pos1 = heMesh->Vertices().at(v1)->pos;
-		auto pos2 = heMesh->Vertices().at(v2)->pos;
-
-		auto d10 = pos0 - pos1;
-		auto d12 = pos2 - pos1;
-		auto wN = d12.Cross(d10);
-
-		sWNs[v0] += wN;
-		sWNs[v1] += wN;
-		sWNs[v2] += wN;
-	}
-
-	// 6. tangential smoothing
-	printf("6. tangential smoothing\n");
-	const float w = 0.1f;
-	for (auto v : heMesh->Vertices()) {
-		if (v->IsIsolated()) {
-			printf("ERROR::IsotropicRemeshing::Kernel:\n"
-				"\t""[6. tangential smoothing] v is isolated\n");
-			return false;
+				if (e->Length() < minL) {
+					auto centroid = e->Centroid();
+					auto v = heMesh->CollapseEdge(e);
+					if (v != nullptr) {
+						v->pos = centroid;
+						for (auto adjE : v->AdjEdges())
+							dEs.insert(adjE);
+					}
+				}
+			}
 		}
 
-		// offset
-		Vec3 adjVCentroid;
-		auto adjVs = v->AdjVertices();
-		for (auto adjV : adjVs)
-			adjVCentroid += adjV->pos;
-		adjVCentroid /= static_cast<float>(adjVs.size());
-		Vec3 offset = adjVCentroid - v->pos;
+		// 4. filp edges which can balance degree (6)
+		printf("4. filp edges which can balance degree (6)\n");
+		const int D = 6; // balance degree
+		for (auto e : heMesh->Edges()) {
+			auto he01 = e->HalfEdge();
 
-		// normal
-		Vec3 normal = sWNs[heMesh->Index(v)].Normalize();
+			auto v0d = static_cast<int>(he01->Origin()->Degree());
+			if (v0d == 3)
+				continue;
+			auto v1d = static_cast<int>(he01->End()->Degree());
+			if (v1d == 3)
+				continue;
+			auto v2d = static_cast<int>(he01->Next()->End()->Degree());
+			auto v3d = static_cast<int>(he01->Pair()->Next()->End()->Degree());
 
-		// tangent offset
-		Vec3 tangentOffset = offset - offset.Dot(normal) * normal;
-		v->newPos = v->pos + w * tangentOffset;
-	}
+			auto cost = pow(v0d - D, 2) + pow(v1d - D, 2) + pow(v2d - D, 2) + pow(v3d - D, 2);
+			auto flipCost = pow(v0d - 1 - D, 2) + pow(v1d - 1 - D, 2) + pow(v2d + 1 - D, 2) + pow(v3d + 1 - D, 2);
+			if (flipCost < cost)
+				heMesh->RotateEdge(e);
+		}
 
-	// 7. update pos
-	printf("7. update pos\n");
-	for (auto v : heMesh->Vertices()) {
-#if NDEBUG
-		if (v->newPos.HasNaN())
-			continue;
-#endif
-		v->pos = v->newPos;
+		// 5. vertex normal
+		printf("5. vertex normal\n");
+		const size_t nV = heMesh->NumVertices();
+		vector<Vec3> sWNs(nV); // sum weighted normals
+		for (auto triangle : heMesh->Export()) {
+			auto v0 = triangle[0];
+			auto v1 = triangle[1];
+			auto v2 = triangle[2];
+
+			auto pos0 = heMesh->Vertices().at(v0)->pos;
+			auto pos1 = heMesh->Vertices().at(v1)->pos;
+			auto pos2 = heMesh->Vertices().at(v2)->pos;
+
+			auto d10 = pos0 - pos1;
+			auto d12 = pos2 - pos1;
+			auto wN = d12.Cross(d10);
+
+			sWNs[v0] += wN;
+			sWNs[v1] += wN;
+			sWNs[v2] += wN;
+		}
+
+		// 6. tangential smoothing
+		printf("6. tangential smoothing\n");
+		const float w = 0.2f;
+		for (auto v : heMesh->Vertices()) {
+
+			// offset
+			Vec3 adjVCentroid;
+			auto adjVs = v->AdjVertices();
+			for (auto adjV : adjVs)
+				adjVCentroid += adjV->pos;
+			adjVCentroid /= static_cast<float>(adjVs.size());
+			Vec3 offset = adjVCentroid - v->pos;
+
+			// normal
+			Vec3 normal = sWNs[heMesh->Index(v)].Normalize();
+
+			// tangent offset
+			Vec3 tangentOffset = offset - offset.Dot(normal) * normal;
+			v->newPos = v->pos + w * tangentOffset;
+		}
+
+		// 7. update pos
+		printf("7. update pos\n");
+		for (auto v : heMesh->Vertices())
+			v->pos = v->newPos;
 	}
 
 	return true;

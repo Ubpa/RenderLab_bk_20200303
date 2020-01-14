@@ -705,21 +705,26 @@ const Ptr<V> HEMesh<V, _0, _1, _2>::CollapseEdge(Ptr<E> e) {
 	auto he01 = e->HalfEdge();
 	auto he10 = he01->Pair();
 
-	if (he01->Loop().size() == 3 && he01->Next()->End()->Degree() == 3
-		|| he10->Loop().size() == 3 && he10->Next()->End()->Degree() == 3)
+	auto v0 = he01->Origin();
+	auto v1 = he01->End();
+
+	std::vector<Ptr<V>> comV;
+	auto v0AdjVs = v0->AdjVertices();
+	auto v1AdjVs = v1->AdjVertices();
+	std::set_intersection(v0AdjVs.begin(), v0AdjVs.end(), v1AdjVs.begin(), v1AdjVs.end(),
+		std::insert_iterator<std::vector<Ptr<V>>>(comV, comV.begin()));
+	
+	if (comV.size() != 2)
 	{
 #if !NDEBUG
 		printf("WARNNING::HEMesh::CollapseEdge:\n"
-			"\t""edge's adjacent triangle's another vertex degree is 3\n");
+			"\t""N(v0) กษ N(v1) != 2\n");
 #endif
 		return nullptr;
 	}
 
 	auto p01 = he01->Polygon();
 	auto p10 = he10->Polygon();
-
-	auto v0 = he01->Origin();
-	auto v1 = he01->End();
 
 	if (v0->Degree() == 1) {
 		EraseVertex(v0);

@@ -12,6 +12,7 @@
 #include <assert.h>
 #include <set>
 #include <string>
+#include <algorithm>
 
 namespace CppUtil {
 	namespace Basic {
