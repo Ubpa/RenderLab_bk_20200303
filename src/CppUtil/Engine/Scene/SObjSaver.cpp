@@ -152,7 +152,20 @@ void SObjSaver::Visit(Ptr<TriMesh> mesh) {
 			// do nothing
 		};
 		type2func[TriMesh::ENUM_TYPE::CODE] = [=]() {
-			// not support
+			NewEle(str::TriMesh::ENUM_TYPE::CODE::type, [=]() {
+				string positionsStr = "\n";
+				string indicesStr = "\n";
+				positionsStr.reserve(mesh->GetPositions().size() * 3 * 12);
+				int digit = static_cast<int>(log10(mesh->GetPositions().size())) + 1;
+				const auto& indices = mesh->GetIndice();
+				indicesStr.reserve(indices.size() * (digit+1));
+				for (auto pos : mesh->GetPositions())
+					positionsStr += to_string(pos[0]) + " " + to_string(pos[1]) + " " + to_string(pos[2]) + "\n";
+				for (size_t i = 0; i < mesh->GetIndice().size(); i += 3)
+					indicesStr += to_string(indices[i]) + " " + to_string(indices[i + 1]) + " " + to_string(indices[i + 2]) + "\n";
+				NewEle(str::TriMesh::ENUM_TYPE::CODE::position, positionsStr);
+				NewEle(str::TriMesh::ENUM_TYPE::CODE::triangle, indicesStr);
+			});
 		};
 
 		type2func[TriMesh::ENUM_TYPE::CUBE] = [=]() {

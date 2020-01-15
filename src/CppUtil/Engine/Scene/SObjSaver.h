@@ -104,6 +104,9 @@ namespace CppUtil {
 			void Visit(Basic::Ptr<CmptTransform> transform);
 
 		private:
+			tinyxml2::XMLText* NewText(const char * text) {
+				return NewText(std::string(text));
+			}
 			tinyxml2::XMLText * NewText(const std::string & text) {
 				return doc.NewText(text.c_str());
 			}

@@ -71,12 +71,17 @@ namespace str {
 
 		namespace ENUM_TYPE {
 			const char * const INVALID = "invalid";
-			const char * const CODE = "code";
 			const char * const CUBE = "cube";
 			const char * const SPHERE = "sphere";
 			const char * const PLANE = "plane";
 			const char * const FILE = "file";
 			const char * const DISK = "disk";
+			namespace CODE {
+				const char* const type = "code";
+
+				const char* const position = "position";
+				const char* const triangle = "triangle";
+			}
 		}
 	}
 

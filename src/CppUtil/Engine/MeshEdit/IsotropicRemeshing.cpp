@@ -8,17 +8,6 @@
 #include <array>
 #include <tuple>
 
-//#include <thread>
-//
-//#include <omp.h>
-//
-//#ifdef NDEBUG
-//#define THREAD_NUM omp_get_num_procs() - 1
-//#else
-//#define THREAD_NUM 1
-////#define THREAD_NUM omp_get_num_procs() - 1
-//#endif //  NDEBUG
-
 using namespace CppUtil;
 using namespace CppUtil::Basic;
 using namespace CppUtil::Engine;
@@ -211,7 +200,6 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 		printf("6. tangential smoothing\n");
 		const float w = 0.2f;
 		for (auto v : heMesh->Vertices()) {
-
 			// offset
 			Vec3 adjVCentroid;
 			auto adjVs = v->AdjVertices();

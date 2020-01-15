@@ -71,7 +71,7 @@ const string StrAPI::Replace(const string & str, const string & orig, const stri
 }
 
 const std::string StrAPI::DelTailAfter(const std::string & str, char c) {
-	for (size_t i = str.size() - 1; i >= 0; i--) {
+	for (auto i = static_cast<int>(str.size()) - 1; i >= 0; i--) {
 		if (str[i] == c)
 			return str.substr(0, i);
 	}

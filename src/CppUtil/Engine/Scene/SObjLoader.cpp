@@ -3,6 +3,7 @@
 #include "SL_Common.h"
 
 #include <CppUtil/Basic/UGM/Transform.h>
+#include <CppUtil/Basic/StrAPI.h>
 
 using namespace CppUtil;
 using namespace CppUtil::Basic;
@@ -28,6 +29,33 @@ const string SObjLoader::To(const Key & key) {
 template<>
 const Ptr<Image> SObjLoader::To(const Key & key) {
 	return Image::New(key);
+}
+
+template<>
+const vector<uint> SObjLoader::To(const Key& key) {
+	vector<uint> triangles;
+	auto triangleStrs = StrAPI::Spilt(key, '\n');
+	for (const auto& triangleStr : triangleStrs) {
+		if (triangleStr.empty())
+			continue;
+		auto idxStrs = StrAPI::Spilt(triangleStr, ' ');
+		for (const auto& idxStr : idxStrs)
+			triangles.push_back(static_cast<uint>(stoi(idxStr)));
+	}
+	return triangles;
+}
+
+template<>
+const vector<Point3> SObjLoader::To(const Key& key) {
+	vector<Point3> positions;
+	auto positionStrs = StrAPI::Spilt(key, '\n');
+	for (const auto& positionStr : positionStrs) {
+		if (positionStr.empty())
+			continue;
+		auto valStrs = StrAPI::Spilt(positionStr, ' ');
+		positions.emplace_back(stof(valStrs[0]), stof(valStrs[1]), stof(valStrs[2]));
+	}
+	return positions;
 }
 
 // ------------ Basic ----------------
@@ -197,8 +225,14 @@ static Ptr<TriMesh> SObjLoader::Load(XMLElement * ele) {
 	funcMap[str::TriMesh::ENUM_TYPE::INVALID] = [&](XMLElement * ele) {
 		triMesh = nullptr;
 	};
-	funcMap[str::TriMesh::ENUM_TYPE::CODE] = [&](XMLElement * ele) {
-		triMesh = nullptr;//not supprt now
+	funcMap[str::TriMesh::ENUM_TYPE::CODE::type] = [&](XMLElement * ele) {
+		FuncMap innerFuncMap;
+		vector<Point3> positions;
+		vector<uint> indices;
+		Reg_Text_val<vector<Point3>>(innerFuncMap, str::TriMesh::ENUM_TYPE::CODE::position, positions);
+		Reg_Text_val<vector<uint>>(innerFuncMap, str::TriMesh::ENUM_TYPE::CODE::triangle, indices);
+		LoadNode(ele, innerFuncMap);
+		triMesh = TriMesh::New(indices, positions);
 	};
 	funcMap[str::TriMesh::ENUM_TYPE::CUBE] = [&](XMLElement * ele) {
 		triMesh = TriMesh::GenCube();
