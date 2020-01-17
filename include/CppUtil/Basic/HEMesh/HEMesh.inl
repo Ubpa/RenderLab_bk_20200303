@@ -204,7 +204,8 @@ namespace CppUtil {
 		}
 
 		template<typename V, typename _0, typename _1, typename _2>
-		const Ptr<V> HEMesh<V, _0, _1, _2>::SpiltEdge(Ptr<E> e) {
+		template<typename ...Args>
+		const Ptr<V> HEMesh<V, _0, _1, _2>::SpiltEdge(Ptr<E> e, Args&& ... args) {
 			auto he01 = e->HalfEdge();
 			auto he10 = he01->Pair();
 
@@ -227,7 +228,7 @@ namespace CppUtil {
 				}
 
 				e->SetHalfEdge(he01);
-				auto v3 = AddEdgeVertex(e);
+				auto v3 = AddEdgeVertex(e, std::forward<Args>(args)...);
 				auto he31 = v3->HalfEdge();
 				auto he20 = he31->Next()->Next();
 				ConnectVertex(he31, he20);
@@ -242,7 +243,7 @@ namespace CppUtil {
 				return nullptr;
 			}
 
-			auto v4 = AddEdgeVertex(e);
+			auto v4 = AddEdgeVertex(e, std::forward<Args>(args)...);
 			auto he41 = v4->HalfEdge();
 			auto he40 = he41->Pair()->Next();
 			auto he20 = he41->Next()->Next();
@@ -313,7 +314,7 @@ namespace CppUtil {
 		}
 
 		template<typename V, typename _0, typename _1, typename _2>
-		bool HEMesh<V, _0, _1, _2>::Init(std::vector<std::vector<size_t>> polygons) {
+		bool HEMesh<V, _0, _1, _2>::Init(const std::vector<std::vector<size_t>> & polygons) {
 			Clear();
 
 			if (polygons.empty()) {
@@ -379,7 +380,7 @@ namespace CppUtil {
 		}
 
 		template<typename V, typename _0, typename _1, typename _2>
-		bool HEMesh<V, _0, _1, _2>::Init(std::vector<size_t> polygons, size_t sides) {
+		bool HEMesh<V, _0, _1, _2>::Init(const std::vector<size_t> & polygons, size_t sides) {
 			if (polygons.size() % sides != 0) {
 				printf("ERROR::HEMesh::Init:\n"
 					"\t""polygons.size() isn't an integer multiple of sides\n")
@@ -476,12 +477,12 @@ namespace CppUtil {
 			he = he->Next();
 
 			RemoveVertex(v);
-			return AddPolygon(he->Loop());
+			return AddPolygon(he->NextLoop());
 		}
 
 		template<typename V, typename _0, typename _1, typename _2>
 		template<typename ...Args>
-		const Ptr<V> HEMesh<V, _0, _1, _2>::AddEdgeVertex(Ptr<E> e) {
+		const Ptr<V> HEMesh<V, _0, _1, _2>::AddEdgeVertex(Ptr<E> e, Args&& ... args) {
 			// prepare
 			auto he01 = e->HalfEdge();
 			auto he10 = he01->Pair();
@@ -587,62 +588,7 @@ namespace CppUtil {
 
 		template<typename V, typename _0, typename _1, typename _2>
 		template<typename ...Args>
-		const Ptr<V> HEMesh<V, _0, _1, _2>::AddPolygonVertex(Ptr<HE> he, Args&& ... args) {
-			auto p = he->Polygon();
-
-			auto pre = he->Pre();
-			auto v0 = he->Origin();
-			auto v1 = AddVertex(std::forward<Args>(args)...);
-
-			auto he01 = NewHalfEdge();
-			auto he10 = NewHalfEdge();
-			auto e01 = NewEdge();
-
-			he01->SetNext(he10);
-			he01->SetPair(he10);
-			he01->SetOrigin(v0);
-			he01->SetEdge(e01);
-			he01->SetPolygon(p);
-
-			he10->SetNext(he);
-			he10->SetPair(he01);
-			he10->SetOrigin(v1);
-			he10->SetEdge(e01);
-			he10->SetPolygon(p);
-
-			e01->SetHalfEdge(he01);
-			v1->SetHalfEdge(he10);
-
-			pre->SetNext(he01);
-
-			return v1;
-		}
-
-		template<typename V, typename _0, typename _1, typename _2>
-		template<typename ...Args>
-		const Ptr<V> HEMesh<V, _0, _1, _2>::AddPolygonVertex(Ptr<P> p, Ptr<V> v, Args&& ... args) {
-			Ptr<HE> he;
-			if (P::IsBoundary(p)) {
-				for (auto outHE : v->AdjOutHEs()) {
-					if (P::IsBoundary(outHE->Polygon())) {
-						he = outHE;
-						break;
-					}
-				}
-				if (he == nullptr) {
-					printf("ERROR::HEMesh::AddPolygonVertex:\n"
-						"\t""p is boundary(nullptr) but v is not on boundary\n");
-					return nullptr;
-				}
-			}
-			else
-				he = p->HalfEdge()->NextAt(v);
-
-			return AddPolygonVertex(he, std::forward<Args>(args)...);
-		}
-
-		template<typename V, typename _0, typename _1, typename _2>
-		const Ptr<typename V::E_t> HEMesh<V, _0, _1, _2>::ConnectVertex(Ptr<HE> he0, Ptr<HE> he1) {
+		const Ptr<typename V::E_t> HEMesh<V, _0, _1, _2>::ConnectVertex(Ptr<HE> he0, Ptr<HE> he1, Args&& ... args) {
 			auto p = he0->Polygon();
 			if (p != he1->Polygon()) {
 				printf("ERROR::HEMesh::ConnectVertex:\n"
@@ -678,7 +624,7 @@ namespace CppUtil {
 			auto he0Loop = he0->NextTo(he1);
 			auto he1Loop = he1->NextTo(he0);
 
-			auto e01 = NewEdge();
+			auto e01 = NewEdge(std::forward<Args>(args)...);
 			auto he01 = NewHalfEdge();
 			auto he10 = NewHalfEdge();
 
@@ -707,7 +653,8 @@ namespace CppUtil {
 		}
 
 		template<typename V, typename _0, typename _1, typename _2>
-		const Ptr<V> HEMesh<V, _0, _1, _2>::CollapseEdge(Ptr<E> e) {
+		template<typename ... Args>
+		const Ptr<V> HEMesh<V, _0, _1, _2>::CollapseEdge(Ptr<E> e, Args&& ...args) {
 			auto he01 = e->HalfEdge();
 			auto he10 = he01->Pair();
 
@@ -750,7 +697,7 @@ namespace CppUtil {
 			}
 
 			// set v
-			auto v = NewVertex();
+			auto v = NewVertex(std::forward<Args>(args)...);
 			v->SetHalfEdge(he01->Pre()->Pair());
 
 			for (auto he : he01->RotateNext()->RotateNextTo(he01))
@@ -758,7 +705,7 @@ namespace CppUtil {
 			for (auto he : he10->RotateNext()->RotateNextTo(he10))
 				he->SetOrigin(v);
 
-			if (he01->Loop().size() == 3) { // p01->Degree() == 3
+			if (he01->NextLoop().size() == 3) { // p01->Degree() == 3
 				auto he01Next = he01->Next();
 				auto he01Pre = he01->Pre();
 				auto he01NextPair = he01Next->Pair();
@@ -789,7 +736,7 @@ namespace CppUtil {
 				he01->Pre()->SetNext(he01->Next());
 			}
 
-			if (he10->Loop().size() == 3) { // p10->Degree() == 3
+			if (he10->NextLoop().size() == 3) { // p10->Degree() == 3
 				auto he10Next = he10->Next();
 				auto he10Pre = he10->Pre();
 				auto he10NextPair = he10Next->Pair();
@@ -862,7 +809,7 @@ namespace CppUtil {
 					return false;
 			}
 			for (auto v : vertices) {
-				for (auto he : v->AdjOutHEs()) {
+				for (auto he : v->OutHEs()) {
 					if (he->Origin() != v)
 						return false;
 				}
@@ -892,6 +839,5 @@ namespace CppUtil {
 		}
 	}
 }
-
 
 #endif // !_CPPUTIL_BASIC_HEMESH_HEMESH_INL_

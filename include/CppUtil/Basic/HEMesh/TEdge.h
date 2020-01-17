@@ -23,7 +23,7 @@ namespace CppUtil {
 			// clockwise
 			// + [he.RotateNext, he.RotateNext.RotateNext, ..., he)
 			// + [he.next, he.next.RotateNext, ..., he.pair)
-			const std::vector<Ptr<THalfEdge<V, E, P>>> AdjOutHEs();
+			const std::vector<Ptr<THalfEdge<V, E, P>>> OutHEs();
 			const std::set<Ptr<V>> AdjVertices();
 			const std::vector<Ptr<E>> AdjEdges();
 			void Clear() { halfEdge.reset(); }

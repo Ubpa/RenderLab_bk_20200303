@@ -119,9 +119,7 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 				dEs.erase(iter);
 
 				if (e->Length() > maxL) {
-					auto centroid = e->Centroid();
-					auto v = heMesh->SpiltEdge(e);
-					v->pos = centroid;
+					auto v = heMesh->SpiltEdge(e, e->Centroid());
 
 					for (auto adjE : v->AdjEdges())
 						dEs.insert(adjE);
@@ -141,10 +139,8 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 					continue;
 
 				if (e->Length() < minL) {
-					auto centroid = e->Centroid();
-					auto v = heMesh->CollapseEdge(e);
+					auto v = heMesh->CollapseEdge(e, e->Centroid());
 					if (v != nullptr) {
-						v->pos = centroid;
 						for (auto adjE : v->AdjEdges())
 							dEs.insert(adjE);
 					}

@@ -25,8 +25,8 @@ namespace CppUtil {
 
 			bool IsIsolated() const { return halfEdge.expired(); }
 
-			const std::vector<Ptr<HE>> AdjOutHEs();
-			const std::vector<PtrC<HE>> AdjOutHEs() const { return Const(const_cast<TVertex*>(this)->AdjOutHEs()); }
+			const std::vector<Ptr<HE>> OutHEs() { return IsIsolated() ? std::vector<Ptr<HE>>() : HalfEdge()->RotateNextLoop(); }
+			const std::vector<PtrC<HE>> OutHEs() const { return Const(const_cast<TVertex*>(this)->OutHEs()); }
 
 			const std::vector<Ptr<E>> AdjEdges();
 			const std::vector<PtrC<HE>> AdjEdges() const { return Const(const_cast<TVertex*>(this)->AdjEdges()); }
@@ -46,7 +46,7 @@ namespace CppUtil {
 			bool IsConnectedWith(Ptr<V> v) const { return IsConnected(This<V>(), v); }
 			bool IsBoundary() const;
 
-			size_t Degree() const { return AdjOutHEs().size(); }
+			size_t Degree() const { return OutHEs().size(); }
 
 			void Clear() { halfEdge.reset(); }
 

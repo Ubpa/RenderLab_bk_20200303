@@ -69,14 +69,6 @@ namespace CppUtil {
 		}
 
 		template<typename V, typename E, typename P>
-		const Ptr<THalfEdge<V, E, P>> THalfEdge<V, E, P>::NextAt(Ptr<V> origin) {
-			auto he = This<THalfEdge>();
-			while (he->Origin() != origin)
-				he = he->Next();
-			return he;
-		}
-
-		template<typename V, typename E, typename P>
 		void THalfEdge<V, E, P>::Clear() {
 			next.reset();
 			pair.reset();

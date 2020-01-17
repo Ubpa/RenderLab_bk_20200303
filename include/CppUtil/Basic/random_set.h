@@ -6,7 +6,7 @@
 #include <vector>
 #include <stack>
 
-template<typename T, class Alloc = std::allocator<T>>
+template<typename T, class Hasher = std::hash<T>>
 class random_set {
 public:
 	void insert(const T & e) {
@@ -62,8 +62,8 @@ public:
 
 	bool empty() const { return Tvec.empty(); }
 private:
-	std::unordered_map<T, size_t> Tmap;
-	std::vector<T, Alloc> Tvec;
+	std::unordered_map<T, size_t, Hasher> Tmap;
+	std::vector<T> Tvec;
 };
 
 #endif // !_CPPUTIL_BASIC_HEADER_RANDOM_SET_H_

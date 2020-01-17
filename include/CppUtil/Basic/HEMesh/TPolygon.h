@@ -20,7 +20,7 @@ namespace CppUtil {
 
 			static bool IsBoundary(Ptr<TPolygon> p) { return p == nullptr; }
 			
-			const std::vector<Ptr<HE>> BoundaryHEs() { return HalfEdge()->Loop(); }
+			const std::vector<Ptr<HE>> BoundaryHEs() { return HalfEdge()->NextLoop(); }
 			size_t Degree() const { return static_cast<int>(const_cast<TPolygon*>(this)->BoundaryHEs().size()); }
 			const std::vector<Ptr<E>> BoundaryEdges();
 			const std::vector<Ptr<V>> BoundaryVertice();

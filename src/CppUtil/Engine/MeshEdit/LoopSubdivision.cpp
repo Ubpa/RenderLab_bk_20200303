@@ -163,7 +163,7 @@ void LoopSubdivision::Kernel() {
 		v->isNew = true;
 		v->newPos = e->newPos;
 
-		for (auto he : v->AdjOutHEs()) {
+		for (auto he : v->OutHEs()) {
 			if (he->End() != v0 && he->End() != v1)
 				newEdges.push_back(he->Edge());
 		}

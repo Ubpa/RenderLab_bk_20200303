@@ -32,6 +32,8 @@ namespace CppUtil {
 			class P;
 			class V : public Basic::TVertex<V, E, P> {
 			public:
+				V(const Vec3 pos = 0.f) : pos(pos) {}
+			public:
 				Vec3 pos;
 				Vec3 newPos;
 			};

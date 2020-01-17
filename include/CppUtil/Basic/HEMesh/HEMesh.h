@@ -38,40 +38,49 @@ namespace CppUtil {
 			typename = std::enable_if_t<std::is_base_of_v<TPolygon<V, typename V::E_t, typename V::P_t>, typename V::P_t>>
 		>
 		class HEMesh : public HeapObj {
-		public:
+		private:
 			using HE = typename V::HE;
 			using E = typename V::E_t;
 			using P = typename V::P_t;
 
 		public:
+			HEMesh() = default;
+			HEMesh(const std::vector<std::vector<size_t>>& polygons) { Init(polygons); }
+			HEMesh(const std::vector<size_t>& polygons, size_t sides) { Init(polygons, sides); }
+
+		public:
 			static const Ptr<HEMesh> New() { return Basic::New<HEMesh>(); }
+			static const Ptr<HEMesh> New(const std::vector<std::vector<size_t>>& polygons) { return Basic::New<HEMesh>(polygons); }
+			static const Ptr<HEMesh> New(const std::vector<size_t>& polygons, size_t sides) { return Basic::New<HEMesh>(polygons, sides); }
 
 		public:
 			const std::vector<Ptr<V>> & Vertices() { return vertices.vec(); }
 			const std::vector<Ptr<HE>> & HalfEdges() { return halfEdges.vec(); }
 			const std::vector<Ptr<E>> & Edges() { return edges.vec(); }
 			const std::vector<Ptr<P>> & Polygons() { return polygons.vec(); }
+			const std::vector<std::vector<Ptr<HE>>> Boundaries();
 
 			size_t NumVertices() const { return vertices.size(); }
 			size_t NumEdges() const { return edges.size(); }
 			size_t NumPolygons() const { return polygons.size(); }
 			size_t NumHalfEdges() const { return halfEdges.size(); }
+			size_t NumBoundaries() const { return const_cast<HEMesh*>(this)->Boundaries().size(); }
 
 			size_t Index(Ptr<V> v) const { return vertices.idx(v); }
 			size_t Index(Ptr<E> e) const { return edges.idx(e); }
 			size_t Index(Ptr<P> p) const { return polygons.idx(p); }
 			const std::vector<size_t> Indices(Ptr<P> p) const;
 
-			bool HaveBoundary() const;
-			const std::vector<std::vector<Ptr<HE>>> Boundaries();
-			size_t NumBoundaries() const { return const_cast<HEMesh*>(this)->Boundaries().size(); }
+			bool IsValid() const;
 			bool IsTriMesh() const;
 			// vertices empty => halfedges, edges and polygons empty
 			bool IsEmpty() const { return vertices.empty(); }
+			bool HaveIsolatedVertices() const;
+			bool HaveBoundary() const;
 
 			// min is 0
-			bool Init(std::vector<std::vector<size_t>> polygons);
-			bool Init(std::vector<size_t> polygons, size_t sides);
+			bool Init(const std::vector<std::vector<size_t>> & polygons);
+			bool Init(const std::vector<size_t> & polygons, size_t sides);
 			void Clear();
 			void Reserve(size_t n);
 			const std::vector<std::vector<size_t>> Export() const;
@@ -96,8 +105,20 @@ namespace CppUtil {
 			//  high-level mesh edit
 			// ----------------------
 
+			// edge's halfedge : v0=>v1
+			// nweV's halfedge : newV => v1
+			template<typename ...Args>
+			const Ptr<V> AddEdgeVertex(Ptr<E> e, Args&& ... args);
+
+			// connect he0.origin and he1.origin in he0/he1.polygon
+			// [require] he0.polygon == he1.polygon, he0.origin != he1.origin
+			// [return] edge with halfedge form he0.origin to he1.origin
+			template<typename ...Args>
+			const Ptr<E> ConnectVertex(Ptr<HE> he0, Ptr<HE> he1, Args&& ... args);
+
 			// delete e
-			const Ptr<V> SpiltEdge(Ptr<E> e);
+			template<typename ...Args>
+			const Ptr<V> SpiltEdge(Ptr<E> e, Args&& ... args);
 
 			// counter-clock, remain e in container, won't break iteration
 			bool RotateEdge(Ptr<E> e);
@@ -105,34 +126,8 @@ namespace CppUtil {
 			// RemoveVertex and AddPolygon
 			const Ptr<P> EraseVertex(Ptr<V> v);
 
-			const Ptr<V> CollapseEdge(Ptr<E> e);
-
-			// edge's halfedge : v0=>v1
-			// nweV's halfedge : newV => v1
 			template<typename ...Args>
-			const Ptr<V> AddEdgeVertex(Ptr<E> e);
-
-			// add a vertex in he.polygon
-			// he.origin => new vertex => he.origin
-			// polygon can be boundary
-			template<typename ...Args>
-			const Ptr<V> AddPolygonVertex(Ptr<HE> he, Args&& ... args);
-			// add a vertex in polygon
-			// polygon can be boundary
-			template<typename ...Args>
-			const Ptr<V> AddPolygonVertex(Ptr<P> p, Ptr<V> v, Args&& ... args);
-
-			// connect he0.origin and he1.origin in he0/he1.polygon
-			// [require] he0.polygon == he1.polygon, he0.origin != he1.origin
-			// [return] edge with halfedge form he0.origin to he1.origin
-			const Ptr<E> ConnectVertex(Ptr<HE> he0, Ptr<HE> he1);
-			// connect v0 and v1 in p
-			// call ConnectVertex(p->HalfEdge()->NextAt(v0), p->HalfEdge()->NextAt(v1))
-			// [require] p isn't boundary(nullptr)
-			const Ptr<E> ConnectVertex(Ptr<P> p, Ptr<V> v0, Ptr<V> v1) { return ConnectVertex(p->HalfEdge()->NextAt(v0), p->HalfEdge()->NextAt(v1)); }
-
-			bool IsValid() const;
-			bool HaveIsolatedVertices() const;
+			const Ptr<V> CollapseEdge(Ptr<E> e, Args&& ... args);
 
 		private:
 			// new and insert

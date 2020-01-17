@@ -5,7 +5,7 @@
 namespace CppUtil {
 	namespace Basic {
 		template<typename V, typename E, typename P>
-		const std::vector<Ptr<THalfEdge<V, E, P>>> TEdge<V, E, P>::AdjOutHEs() {
+		const std::vector<Ptr<THalfEdge<V, E, P>>> TEdge<V, E, P>::OutHEs() {
 			std::vector<Ptr<THalfEdge<V, E, P>>> hes;
 			auto he01 = HalfEdge(); // v0 => v1
 			for (auto he = he01->RotateNext(); he != he01; he = he->RotateNext())
@@ -18,7 +18,7 @@ namespace CppUtil {
 		template<typename V, typename E, typename P>
 		const std::set<Ptr<V>> TEdge<V, E, P>::AdjVertices() {
 			std::set<Ptr<V>> vertices;
-			for (auto e : AdjOutHEs())
+			for (auto e : OutHEs())
 				vertices.insert(e->End());
 			return vertices;
 		}
@@ -26,7 +26,7 @@ namespace CppUtil {
 		template<typename V, typename E, typename P>
 		const std::vector<Ptr<E>> TEdge<V, E, P>::AdjEdges() {
 			std::vector<Ptr<E>> edges;
-			for (auto he : AdjOutHEs())
+			for (auto he : OutHEs())
 				edges.push_back(he->Edge());
 			return edges;
 		}
