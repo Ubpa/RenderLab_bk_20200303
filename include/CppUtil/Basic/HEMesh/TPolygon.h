@@ -3,12 +3,10 @@
 #define _CPPUTIL_BASIC_HEMESH_T_POLYGON_H_
 
 #include <CppUtil/Basic/HeapObj.h>
+#include <CppUtil/Basic/HEMesh/ForwardDecl.h>
 
 namespace CppUtil {
 	namespace Basic {
-		template<typename V, typename E, typename P>
-		class THalfEdge;
-
 		template<typename V, typename E, typename P>
 		class TPolygon : public HeapObj {
 		private:
@@ -31,9 +29,9 @@ namespace CppUtil {
 		private:
 			WPtr<THalfEdge<V, E, P>> halfEdge;
 		};
-
-#include <CppUtil/Basic/HEMesh/TPolygon.inl>
 	}
 }
+
+#include <CppUtil/Basic/HEMesh/TPolygon.inl>
 
 #endif // !_CPPUTIL_BASIC_HEMESH_T_POLYGON_H_

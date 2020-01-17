@@ -99,7 +99,6 @@ bool IsotropicRemeshing::Run(size_t n) {
 }
 
 bool IsotropicRemeshing::Kernel(size_t n) {
-	auto triNum = heMesh->NumPolygons();
 	// 1. mean of edges length
 	printf("1. mean of edges length\n");
 	float L = 0.f;
@@ -218,8 +217,10 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 
 		// 7. update pos
 		printf("7. update pos\n");
-		for (auto v : heMesh->Vertices())
-			v->pos = v->newPos;
+		for (auto v : heMesh->Vertices()) {
+			if(!v->newPos.HasNaN())
+				v->pos = v->newPos;
+		}
 	}
 
 	return true;

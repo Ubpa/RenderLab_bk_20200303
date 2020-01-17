@@ -13,11 +13,26 @@
 #include <set>
 #include <string>
 #include <algorithm>
+#include <iterator>
 
 namespace CppUtil {
 	namespace Basic {
+		template <typename E, typename P>
+		class EmptyV : public TVertex<EmptyV<E, P>, E, P> {};
+		template <typename V, typename E>
+		class EmptyP : public TPolygon<V, E, EmptyP<V, E>> {};
+		template <typename V, typename P>
+		class EmptyE : public TEdge<V, EmptyE<V, P>, P> {};
+
+		template <typename V>
+		class EmptyEP_E : public TEdge<V, EmptyEP_E<V>, EmptyEP_P<V>> {};
+		template <typename V>
+		class EmptyEP_P : public TPolygon<V, EmptyEP_E<V>, EmptyEP_P<V>> {};
+
+		class AllEmpty : public TVertex<AllEmpty, EmptyEP_E<AllEmpty>, EmptyEP_P<AllEmpty>> {};
+
 		// nullptr Polygon is a boundary
-		template<typename V,
+		template<typename V = AllEmpty,
 			typename = std::enable_if_t<std::is_base_of_v<TVertex<V, typename V::E_t, typename V::P_t>, V>>,
 			typename = std::enable_if_t<std::is_base_of_v<TEdge<V, typename V::E_t, typename V::P_t>, typename V::E_t>>,
 			typename = std::enable_if_t<std::is_base_of_v<TPolygon<V, typename V::E_t, typename V::P_t>, typename V::P_t>>
@@ -143,9 +158,9 @@ namespace CppUtil {
 			random_set<Ptr<E>> edges;
 			random_set<Ptr<P>> polygons;
 		};
-
-#include<CppUtil/Basic/HEMesh/HEMesh.inl>
 	}
 }
+
+#include<CppUtil/Basic/HEMesh/HEMesh.inl>
 
 #endif // !_CPPUTIL_BASIC_HEMESH_BASE_HEMESH_H_

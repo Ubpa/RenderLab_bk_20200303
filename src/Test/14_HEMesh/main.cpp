@@ -232,12 +232,12 @@ int main() {
 		auto v4 = mesh->SpiltEdge(e02);
 		v4->name = "v4";
 
-		auto v5 = mesh->SpiltEdge(he23->Next()->Edge());
+		auto v5 = mesh->SpiltEdge(v4->EdgeWith(v3));
 		v5->name = "v5";
 
 		Print(mesh);
 	
-		auto v6 = mesh->CollapseEdge(v0->EdgeWith(v3));
+		auto v6 = mesh->CollapseEdge(v4->EdgeWith(v5));
 		v6->name = "v6";
 
 		Print(mesh);
@@ -303,6 +303,16 @@ int main() {
 		if (v != nullptr) // v should be nullptr
 			printf("v should be nullptr\n");
 		Print(mesh);
+	}
+
+	{
+		auto mesh0 = HEMesh<>::New();
+		auto mesh1 = HEMesh<V>::New(); // V E P
+		class tV;
+		class tE;
+		class tV : public TVertex<tV, tE> {};
+		class tE : public TEdge<tV, tE> {};
+		auto mesh2 = HEMesh<tV>::New();
 	}
 
 	return 0;

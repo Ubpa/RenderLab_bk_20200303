@@ -3,6 +3,7 @@
 #define _CPPUTIL_BASIC_HEMESH_T_HALFEDGE_H_
 
 #include <CppUtil/Basic/HeapObj.h>
+#include <CppUtil/Basic/HEMesh/ForwardDecl.h>
 #include <vector>
 #include <assert.h>
 
@@ -63,9 +64,9 @@ namespace CppUtil {
 			WPtr<E> edge;
 			WPtr<P> polygon;
 		};
-
-#include <CppUtil/Basic/HEMesh/THalfEdge.inl>
 	}
 }
+
+#include <CppUtil/Basic/HEMesh/THalfEdge.inl>
 
 #endif // !_CPPUTIL_BASIC_HEMESH_T_HALFEDGE_H_

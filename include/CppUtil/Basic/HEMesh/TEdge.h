@@ -3,15 +3,13 @@
 #define _CPPUTIL_BASIC_HEMESH_T_EDGE_H_
 
 #include <CppUtil/Basic/HeapObj.h>
+#include <CppUtil/Basic/HEMesh/ForwardDecl.h>
 #include <vector>
 #include <set>
 
 namespace CppUtil {
 	namespace Basic {
-		template<typename V, typename E, typename P>
-		class THalfEdge;
-
-		template<typename V, typename E, typename P>
+		template<typename V, typename E, typename P = EmptyP<V, E>>
 		class TEdge : public HeapObj {
 		public:
 			const Ptr<THalfEdge<V, E, P>> HalfEdge() { return halfEdge.lock(); }
@@ -33,9 +31,9 @@ namespace CppUtil {
 		private:
 			WPtr<THalfEdge<V, E, P>> halfEdge;
 		};
-
-#include <CppUtil/Basic/HEMesh/TEdge.inl>
 	}
 }
+
+#include <CppUtil/Basic/HEMesh/TEdge.inl>
 
 #endif // !_CPPUTIL_BASIC_HEMESH_T_EDGE_H_

@@ -3,14 +3,14 @@
 #define _CPPUTIL_BASIC_HEMESH_T_VERETX_H_
 
 #include <CppUtil/Basic/HeapObj.h>
+#include <CppUtil/Basic/HEMesh/ForwardDecl.h>
+
 #include <vector>
 
 namespace CppUtil {
 	namespace Basic {
-		template<typename V, typename E, typename P>
-		class THalfEdge;
-
-		template<typename V, typename E, typename P>
+		template<typename V, typename E = EmptyEP_E<V>,
+			typename P = std::conditional<std::is_same<E, EmptyEP_E<V>>::value, EmptyEP_P<V>, EmptyP<V,E>>::type>
 		class TVertex : public HeapObj {
 		public:
 			using E_t = E;
@@ -56,9 +56,9 @@ namespace CppUtil {
 		private:
 			WPtr<THalfEdge<V, E, P>> halfEdge;
 		};
-
-#include <CppUtil/Basic/HEMesh/TVertex.inl>
 	}
 }
+
+#include <CppUtil/Basic/HEMesh/TVertex.inl>
 
 #endif // !_CPPUTIL_BASIC_HEMESH_T_VERETX_H_

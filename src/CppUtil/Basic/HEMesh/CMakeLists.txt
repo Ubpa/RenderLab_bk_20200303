@@ -4,6 +4,7 @@ set(TARGET_NAME ${DIRNAME})
 #多个源文件用 [空格] 分隔
 #如：set(STR_TARGET_SOURCES "main.cpp src_2.cpp")
 set(STR_TARGET_SOURCES "[NO_USE].cpp")
+set(STR_TARGET_SOURCES "${STR_TARGET_SOURCES} ${CMAKE_SOURCE_DIR}/include/CppUtil/Basic/${DIRNAME}/ForwardDecl.h")
 set(STR_TARGET_SOURCES "${STR_TARGET_SOURCES} ${CMAKE_SOURCE_DIR}/include/CppUtil/Basic/${DIRNAME}/THalfEdge.h")
 set(STR_TARGET_SOURCES "${STR_TARGET_SOURCES} ${CMAKE_SOURCE_DIR}/include/CppUtil/Basic/${DIRNAME}/THalfEdge.inl")
 set(STR_TARGET_SOURCES "${STR_TARGET_SOURCES} ${CMAKE_SOURCE_DIR}/include/CppUtil/Basic/${DIRNAME}/TVertex.h")
