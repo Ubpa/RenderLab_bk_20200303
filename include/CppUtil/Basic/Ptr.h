@@ -24,8 +24,8 @@ namespace CppUtil {
 		using WPtrC = WPtr<const T>;
 
 		// use _ to avoid _Vector_alloc, base class of vector
-		template<template<typename, typename ...> class ContainerT, typename ValT, typename _>
-		ContainerT<PtrC<ValT>> Const(const ContainerT<Ptr<ValT>, _> & c) {
+		template<template<typename, typename ...> class ContainerT, typename ValT, typename ... Args>
+		ContainerT<PtrC<ValT>> Const(const ContainerT<Ptr<ValT>, Args...> & c) {
 			return ContainerT<PtrC<ValT>>(c.begin(), c.end());
 		}
 

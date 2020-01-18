@@ -5,15 +5,15 @@
 namespace CppUtil {
 	namespace Basic {
 		template<typename V, typename E, typename P>
-		const std::vector<Ptr<E>> TVertex<V, E, P>::AdjEdges() {
-			std::vector<Ptr<E>> edges;
+		const std::vector<typename TVertex<V, E, P>::ptr<E>> TVertex<V, E, P>::AdjEdges() {
+			std::vector<ptr<E>> edges;
 			for (auto he : OutHEs())
 				edges.push_back(he->Edge());
 			return edges;
 		}
 
 		template<typename V, typename E, typename P>
-		const Ptr<THalfEdge<V, E, P>> TVertex<V, E, P>::FindFreeIncident() {
+		const typename TVertex<V, E, P>::ptr<THalfEdge<V, E, P>> TVertex<V, E, P>::FindFreeIncident() {
 			for (auto outHE : OutHEs()) {
 				auto inHE = outHE->Pair();
 				if (inHE->IsFree())
@@ -23,7 +23,7 @@ namespace CppUtil {
 		}
 
 		template<typename V, typename E, typename P>
-		const Ptr<THalfEdge<V, E, P>> TVertex<V, E, P>::FindHalfEdge(Ptr<V> v0, Ptr<V> v1) {
+		const typename TVertex<V, E, P>::ptr<THalfEdge<V, E, P>> TVertex<V, E, P>::FindHalfEdge(ptr<V> v0, ptr<V> v1) {
 			for (auto he : v0->OutHEs()) {
 				if (he->End() == v1)
 					return he;
@@ -32,15 +32,15 @@ namespace CppUtil {
 		}
 
 		template<typename V, typename E, typename P>
-		const std::vector<Ptr<V>> TVertex<V, E, P>::AdjVertices() {
-			std::vector<Ptr<V>> adjVs;
+		const std::vector<typename TVertex<V, E, P>::ptr<V>> TVertex<V, E, P>::AdjVertices() {
+			std::vector<ptr<V>> adjVs;
 			for (auto he : OutHEs())
-				adjVs.push_back(CastTo<V>(he->End()));
+				adjVs.push_back(he->End());
 			return adjVs;
 		}
 
 		template<typename V, typename E, typename P>
-		const Ptr<E> TVertex<V, E, P>::EdgeBetween(Ptr<V> v0, Ptr<V> v1) {
+		const typename TVertex<V, E, P>::ptr<E> TVertex<V, E, P>::EdgeBetween(ptr<V> v0, ptr<V> v1) {
 			for (auto outHE : v0->OutHEs()) {
 				if (outHE->End() == v1)
 					return outHE->Edge();

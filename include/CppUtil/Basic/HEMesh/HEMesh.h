@@ -8,12 +8,16 @@
 #include <CppUtil/Basic/HEMesh/TPolygon.h>
 
 #include <CppUtil/Basic/random_set.h>
+#include <CppUtil/Basic/vec_pool.h>
+#include <CppUtil/Basic/HeapObj.h>
 
-#include <assert.h>
 #include <set>
 #include <string>
 #include <algorithm>
 #include <iterator>
+#include <unordered_map>
+
+#include <assert.h>
 
 namespace CppUtil {
 	namespace Basic {
@@ -38,10 +42,18 @@ namespace CppUtil {
 			typename = std::enable_if_t<std::is_base_of_v<TPolygon<V, typename V::E_t, typename V::P_t>, typename V::P_t>>
 		>
 		class HEMesh : public HeapObj {
-		private:
-			using HE = typename V::HE;
+		public:
+			using HE = typename V::HE_t;
 			using E = typename V::E_t;
 			using P = typename V::P_t;
+			template<typename T>
+			using ptr = HEMesh_ptr<T, HEMesh>;
+			template<typename T>
+			using ptrc = ptr<const T>;
+
+		private:
+			template<typename T>
+			using ID = HEMesh_ID<T>;
 
 		public:
 			HEMesh() = default;
@@ -54,11 +66,11 @@ namespace CppUtil {
 			static const Ptr<HEMesh> New(const std::vector<size_t>& polygons, size_t sides) { return Basic::New<HEMesh>(polygons, sides); }
 
 		public:
-			const std::vector<Ptr<V>> & Vertices() { return vertices.vec(); }
-			const std::vector<Ptr<HE>> & HalfEdges() { return halfEdges.vec(); }
-			const std::vector<Ptr<E>> & Edges() { return edges.vec(); }
-			const std::vector<Ptr<P>> & Polygons() { return polygons.vec(); }
-			const std::vector<std::vector<Ptr<HE>>> Boundaries();
+			const std::vector<ptr<V>> & Vertices() { return vertices.vec(); }
+			const std::vector<ptr<HE>> & HalfEdges() { return halfEdges.vec(); }
+			const std::vector<ptr<E>> & Edges() { return edges.vec(); }
+			const std::vector<ptr<P>> & Polygons() { return polygons.vec(); }
+			const std::vector<std::vector<ptr<HE>>> Boundaries();
 
 			size_t NumVertices() const { return vertices.size(); }
 			size_t NumEdges() const { return edges.size(); }
@@ -66,10 +78,10 @@ namespace CppUtil {
 			size_t NumHalfEdges() const { return halfEdges.size(); }
 			size_t NumBoundaries() const { return const_cast<HEMesh*>(this)->Boundaries().size(); }
 
-			size_t Index(Ptr<V> v) const { return vertices.idx(v); }
-			size_t Index(Ptr<E> e) const { return edges.idx(e); }
-			size_t Index(Ptr<P> p) const { return polygons.idx(p); }
-			const std::vector<size_t> Indices(Ptr<P> p) const;
+			size_t Index(ptr<V> v) const { return vertices.idx(v); }
+			size_t Index(ptr<E> e) const { return edges.idx(e); }
+			size_t Index(ptr<P> p) const { return polygons.idx(p); }
+			const std::vector<size_t> Indices(ptr<P> p) const;
 
 			bool IsValid() const;
 			bool IsTriMesh() const;
@@ -90,16 +102,16 @@ namespace CppUtil {
 			// -----------------
 
 			template<typename ...Args>
-			const Ptr<V> AddVertex(Args&& ... args) { return NewVertex(std::forward<Args>(args)...); }
+			const ptr<V> AddVertex(Args&& ... args) { return New<V>(std::forward<Args>(args)...); }
 			// e's halfedge is form v0 to v1
 			template<typename ...Args>
-			const Ptr<E> AddEdge(Ptr<V> v0, Ptr<V> v1, Args&& ... args);
+			const ptr<E> AddEdge(ptr<V> v0, ptr<V> v1, Args&& ... args);
 			// polygon's halfedge is heLoop[0]
 			template<typename ...Args>
-			const Ptr<P> AddPolygon(const std::vector<Ptr<HE>> heLoop, Args&& ... args);
-			void RemovePolygon(Ptr<P> polygon);
-			void RemoveEdge(Ptr<E> e);
-			void RemoveVertex(Ptr<V> v);
+			const ptr<P> AddPolygon(const std::vector<ptr<HE>> heLoop, Args&& ... args);
+			void RemovePolygon(ptr<P> polygon);
+			void RemoveEdge(ptr<E> e);
+			void RemoveVertex(ptr<V> v);
 
 			// ----------------------
 			//  high-level mesh edit
@@ -108,50 +120,117 @@ namespace CppUtil {
 			// edge's halfedge : v0=>v1
 			// nweV's halfedge : newV => v1
 			template<typename ...Args>
-			const Ptr<V> AddEdgeVertex(Ptr<E> e, Args&& ... args);
+			const ptr<V> AddEdgeVertex(ptr<E> e, Args&& ... args);
 
 			// connect he0.origin and he1.origin in he0/he1.polygon
 			// [require] he0.polygon == he1.polygon, he0.origin != he1.origin
 			// [return] edge with halfedge form he0.origin to he1.origin
 			template<typename ...Args>
-			const Ptr<E> ConnectVertex(Ptr<HE> he0, Ptr<HE> he1, Args&& ... args);
+			const ptr<E> ConnectVertex(ptr<HE> he0, ptr<HE> he1, Args&& ... args);
 
 			// delete e
 			template<typename ...Args>
-			const Ptr<V> SpiltEdge(Ptr<E> e, Args&& ... args);
+			const ptr<V> SpiltEdge(ptr<E> e, Args&& ... args);
 
 			// counter-clock, remain e in container, won't break iteration
-			bool RotateEdge(Ptr<E> e);
+			bool RotateEdge(ptr<E> e);
 
 			// RemoveVertex and AddPolygon
-			const Ptr<P> EraseVertex(Ptr<V> v);
+			const ptr<P> EraseVertex(ptr<V> v);
 
 			template<typename ...Args>
-			const Ptr<V> CollapseEdge(Ptr<E> e, Args&& ... args);
+			const ptr<V> CollapseEdge(ptr<E> e, Args&& ... args);
 
 		private:
 			// new and insert
-			const Ptr<HE> NewHalfEdge();
-			template<typename ...Args>
-			const Ptr<V> NewVertex(Args&& ... args);
-			template<typename ...Args>
-			const Ptr<E> NewEdge(Args&& ... args);
-			template<typename ...Args>
-			const Ptr<P> NewPolygon(Args&& ... args);
+			template<typename T, typename ... Args>
+			const ptr<T> New(Args&& ... args) {
+				auto idx = traits<T>::pool(this).request(std::forward<Args>(args)...);
+				auto& elem = traits<T>::pool(this).at(idx);
+				ID<T> id(traits<T>::nextID(this)++);
+				traits<T>::table(this)[id] = idx;
+				elem.self = ptr<T>(This<HEMesh>(), id);
+				traits<T>::set(this).insert(elem.self);
+				return elem.self;
+			}
 
 			// clear and erase
-			void DeleteHalfEdge(Ptr<HE> he) { he->Clear(); halfEdges.erase(he); }
-			void DeleteVertex(Ptr<V> v) { v->Clear(); vertices.erase(v); }
-			void DeleteEdge(Ptr<E> e) { e->Clear(); edges.erase(e); }
-			void DeletePolygon(Ptr<P> p) { p->Clear(); polygons.erase(p); }
+			template<typename T>
+			void Delete(ptr<T> elem) {
+				elem->Clear();
+				auto target = traits<T>::table(this).find(elem.ID);
+				size_t idx = target->second;
+				traits<T>::table(this).erase(target);
+				traits<T>::pool(this).recycle(idx);
+				traits<T>::set(this).erase(elem);
+			}
+
+			template<typename T, typename HEMesh_t>
+			friend class HEMesh_ptr;
+			template<typename T>
+			T* const Get(ID<T> ID) {
+				auto target = traits<T>::table(this).find(ID);
+				if (target == traits<T>::table(this).end())
+					return nullptr;
+				else
+					return &traits<T>::pool(this)[target->second];
+			}
 		protected:
 			virtual ~HEMesh() = default;
 
 		private:
-			random_set<Ptr<HE>> halfEdges;
-			random_set<Ptr<V>> vertices;
-			random_set<Ptr<E>> edges;
-			random_set<Ptr<P>> polygons;
+			random_set<ptr<HE>> halfEdges;
+			random_set<ptr<V>> vertices;
+			random_set<ptr<E>> edges;
+			random_set<ptr<P>> polygons;
+
+			vec_pool<HE> poolHE;
+			vec_pool<V> poolV;
+			vec_pool<E> poolE;
+			vec_pool<P> poolP;
+
+			std::unordered_map<ID<HE>, size_t> tableHE;
+			std::unordered_map<ID<V>, size_t> tableV;
+			std::unordered_map<ID<E>, size_t> tableE;
+			std::unordered_map<ID<P>, size_t> tableP;
+
+			int nextID_HE = 0;
+			int nextID_V = 0;
+			int nextID_E = 0;
+			int nextID_P = 0;
+
+			template<typename T>
+			struct traits;
+			template<typename T>
+			friend struct traits;
+			template<>
+			struct traits<HE> {
+				static auto& pool(HEMesh* mesh) { return mesh->poolHE; }
+				static auto& table(HEMesh* mesh) { return mesh->tableHE; }
+				static auto& set(HEMesh* mesh) { return mesh->halfEdges; }
+				static auto& nextID(HEMesh* mesh) { return mesh->nextID_HE; }
+			};
+			template<>
+			struct traits<V> {
+				static auto& pool(HEMesh* mesh) { return mesh->poolV; }
+				static auto& table(HEMesh* mesh) { return mesh->tableV; }
+				static auto& set(HEMesh* mesh) { return mesh->vertices; }
+				static auto& nextID(HEMesh* mesh) { return mesh->nextID_V; }
+			};
+			template<>
+			struct traits<E> {
+				static auto& pool(HEMesh* mesh) { return mesh->poolE; }
+				static auto& table(HEMesh* mesh) { return mesh->tableE; }
+				static auto& set(HEMesh* mesh) { return mesh->edges; }
+				static auto& nextID(HEMesh* mesh) { return mesh->nextID_E; }
+			};
+			template<>
+			struct traits<P> {
+				static auto& pool(HEMesh* mesh) { return mesh->poolP; }
+				static auto& table(HEMesh* mesh) { return mesh->tableP; }
+				static auto& set(HEMesh* mesh) { return mesh->polygons; }
+				static auto& nextID(HEMesh* mesh) { return mesh->nextID_P; }
+			};
 		};
 	}
 }

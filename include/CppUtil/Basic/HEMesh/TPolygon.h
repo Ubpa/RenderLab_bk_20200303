@@ -2,32 +2,47 @@
 #ifndef _CPPUTIL_BASIC_HEMESH_T_POLYGON_H_
 #define _CPPUTIL_BASIC_HEMESH_T_POLYGON_H_
 
-#include <CppUtil/Basic/HeapObj.h>
 #include <CppUtil/Basic/HEMesh/ForwardDecl.h>
 
 namespace CppUtil {
 	namespace Basic {
 		template<typename V, typename E, typename P>
-		class TPolygon : public HeapObj {
+		class TPolygon {
 		private:
 			using HE = THalfEdge<V, E, P>;
 
 		public:
-			const Ptr<THalfEdge<V,E,P>> HalfEdge() { return halfEdge.lock(); }
-			const PtrC<THalfEdge<V, E, P>> HalfEdge() const { return const_cast<TPolygon*>(this)->HalfEdge(); }
+			using V_t = V;
+			using E_t = E;
+			using P_t = P;
+			using HE_t = HE;
+			using HEMesh_t = HEMesh<V, void, void, void>;
+			template<typename T>
+			using ptr = HEMesh_ptr<T, HEMesh_t>;
+			template<typename T>
+			using ptrc = ptr<const T>;
 
-			void SetHalfEdge(Ptr<THalfEdge<V, E, P>> he) { halfEdge = he; }
+		public:
+			const ptr<HE> HalfEdge() { return halfEdge; }
+			const ptrc<HE> HalfEdge() const { return const_cast<TPolygon*>(this)->HalfEdge(); }
 
-			static bool IsBoundary(Ptr<TPolygon> p) { return p == nullptr; }
+			void SetHalfEdge(ptr<HE> he) { halfEdge = he; }
+
+			static bool IsBoundary(ptr<P> p) { return p == nullptr; }
 			
-			const std::vector<Ptr<HE>> BoundaryHEs() { return HalfEdge()->NextLoop(); }
+			const std::vector<ptr<HE>> BoundaryHEs() { return HalfEdge()->NextLoop(); }
 			size_t Degree() const { return static_cast<int>(const_cast<TPolygon*>(this)->BoundaryHEs().size()); }
-			const std::vector<Ptr<E>> BoundaryEdges();
-			const std::vector<Ptr<V>> BoundaryVertice();
+			const std::vector<ptr<E>> BoundaryEdges();
+			const std::vector<ptr<V>> BoundaryVertice();
 
-			void Clear() { halfEdge.reset(); }
+			void Clear() { halfEdge.reset(); self.reset(); }
+
+		public:
+			ptr<HE> halfEdge;
+
 		private:
-			WPtr<THalfEdge<V, E, P>> halfEdge;
+			friend class HEMesh<V, void, void, void>;
+			ptr<P> self;
 		};
 	}
 }

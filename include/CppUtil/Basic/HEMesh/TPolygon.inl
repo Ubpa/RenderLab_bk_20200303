@@ -5,16 +5,16 @@
 namespace CppUtil {
 	namespace Basic {
 		template<typename V, typename E, typename P>
-		const std::vector<Ptr<E>> TPolygon<V, E, P>::BoundaryEdges() {
-			std::vector<Ptr<E>> edges;
+		const std::vector<typename TPolygon<V, E, P>::ptr<E>> TPolygon<V, E, P>::BoundaryEdges() {
+			std::vector<ptr<E>> edges;
 			for (auto he : BoundaryHEs())
 				edges.push_back(he->Edge());
 			return edges;
 		}
 
 		template<typename V, typename E, typename P>
-		const std::vector<Ptr<V>> TPolygon<V, E, P>::BoundaryVertice() {
-			std::vector<Ptr<V>> vertice;
+		const std::vector<typename TPolygon<V, E, P>::ptr<V>> TPolygon<V, E, P>::BoundaryVertice() {
+			std::vector<ptr<V>> vertice;
 			for (auto he : BoundaryHEs())
 				vertice.push_back(he->Origin());
 			return vertice;

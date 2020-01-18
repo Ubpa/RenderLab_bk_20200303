@@ -13,16 +13,12 @@ class P;
 class V : public TVertex<V,E,P> {
 public:
 	V(const string & name = "NO_NAME") : name(name){}
-protected:
-	virtual ~V() = default;
 public:
 	string name;
 };
 class E : public TEdge<V, E, P> {
 public:
 	E(const string& pre = "E") : pre(pre){}
-protected:
-	virtual ~E() = default;
 public:
 	const string Name() const { return "[" + pre + "]" + HalfEdge()->Origin()->name + "-" + HalfEdge()->End()->name; }
 private:
@@ -42,18 +38,16 @@ public:
 		} while (he != HalfEdge());
 		return name;
 	}
-protected:
-	virtual ~P() = default;
 private:
 	string pre;
 };
 
-ostream & operator<< (ostream & os, Ptr<V> v) {
+ostream & operator<< (ostream & os, HEMesh<V>::ptr<V> v) {
 	os << v->name;
 	return os;
 }
 
-ostream & operator<< (ostream & os, Ptr<HEMesh<V>::HE> he) {
+ostream & operator<< (ostream & os, HEMesh<V>::ptr<HEMesh<V>::HE> he) {
 	os << he->Origin() << "->" << he->End();
 	return os;
 }

@@ -5,15 +5,15 @@
 namespace CppUtil {
 	namespace Basic {
 		template<typename V, typename E, typename P>
-		const Ptr<THalfEdge<V, E, P>> THalfEdge<V, E, P>::Pre() {
-			Ptr<THalfEdge> he;
-			for (he = This<THalfEdge>(); he->Next()->Next() != This<THalfEdge>(); he = he->Next())
+		const typename THalfEdge<V,E,P>::ptr<THalfEdge<V, E, P>> THalfEdge<V, E, P>::Pre() {
+			ptr<THalfEdge> he;
+			for (he = self; he->Next()->Next() != self; he = he->Next())
 				;// empty
 			return he->Next();
 		}
 
 		template<typename V, typename E, typename P>
-		const Ptr<THalfEdge<V, E, P>> THalfEdge<V, E, P>::FindFreeIncident(Ptr<THalfEdge> begin, Ptr<THalfEdge> end) {
+		const typename THalfEdge<V,E,P>::ptr<THalfEdge<V, E, P>> THalfEdge<V, E, P>::FindFreeIncident(ptr<THalfEdge> begin, ptr<THalfEdge> end) {
 			assert(begin->End() == end->End());
 
 			for (auto he = begin; he != end; he = he->Next()->Pair()) {
@@ -25,7 +25,7 @@ namespace CppUtil {
 		}
 
 		template<typename V, typename E, typename P>
-		bool THalfEdge<V, E, P>::MakeAdjacent(Ptr<THalfEdge> inHE, Ptr<THalfEdge> outHE) {
+		bool THalfEdge<V, E, P>::MakeAdjacent(ptr<THalfEdge> inHE, ptr<THalfEdge> outHE) {
 			assert(inHE->End() == outHE->Origin());
 
 			if (inHE->Next() == outHE)
@@ -47,8 +47,8 @@ namespace CppUtil {
 		}
 
 		template<typename V, typename E, typename P>
-		const std::vector<Ptr<THalfEdge<V, E, P>>> THalfEdge<V, E, P>::NextBetween(Ptr<THalfEdge> begin, Ptr<THalfEdge> end) {
-			std::vector<Ptr<THalfEdge<V, E, P>>> hes;
+		const std::vector<typename THalfEdge<V,E,P>::ptr<THalfEdge<V, E, P>>> THalfEdge<V, E, P>::NextBetween(ptr<THalfEdge> begin, ptr<THalfEdge> end) {
+			std::vector<ptr<THalfEdge<V, E, P>>> hes;
 			auto he = begin;
 			do {
 				hes.push_back(he);
@@ -58,8 +58,8 @@ namespace CppUtil {
 		}
 
 		template<typename V, typename E, typename P>
-		const std::vector<Ptr<THalfEdge<V, E, P>>> THalfEdge<V, E, P>::RotateNextBetween(Ptr<THalfEdge> begin, Ptr<THalfEdge> end) {
-			std::vector<Ptr<THalfEdge<V, E, P>>> hes;
+		const std::vector<typename THalfEdge<V,E,P>::ptr<THalfEdge<V, E, P>>> THalfEdge<V, E, P>::RotateNextBetween(ptr<THalfEdge> begin, ptr<THalfEdge> end) {
+			std::vector<ptr<THalfEdge<V, E, P>>> hes;
 			auto he = begin;
 			do {
 				hes.push_back(he);
@@ -75,6 +75,7 @@ namespace CppUtil {
 			origin.reset();
 			edge.reset();
 			polygon.reset();
+			self.reset();
 		}
 	}
 }

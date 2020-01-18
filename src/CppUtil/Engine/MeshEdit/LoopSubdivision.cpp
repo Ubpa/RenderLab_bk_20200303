@@ -153,15 +153,16 @@ void LoopSubdivision::Kernel() {
 
 	// 3. spilt edges
 	auto edges = heMesh->Edges(); // must copy
-	vector<Ptr<E>> newEdges;
+	vector<HEMesh<V>::ptr<E>> newEdges;
 	newEdges.reserve(2 * edges.size());
 	for (auto e : edges) {
 		auto v0 = e->HalfEdge()->Origin();
 		auto v1 = e->HalfEdge()->End();
-
+		
+		auto newPos = e->newPos;
 		auto v = heMesh->SpiltEdge(e); // e is deleted in HEMesh
 		v->isNew = true;
-		v->newPos = e->newPos;
+		v->newPos = newPos;
 
 		for (auto he : v->OutHEs()) {
 			if (he->End() != v0 && he->End() != v1)

@@ -112,7 +112,7 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 	for (size_t i = 0; i < n; i++) {
 		{// 2. spilt edges with length > maxL
 			printf("2. spilt edges with length > maxL\n");
-			unordered_set<Ptr<E>> dEs(heMesh->Edges().begin(), heMesh->Edges().end()); // dynamic edges
+			unordered_set<HEMesh<V>::ptr<E>> dEs(heMesh->Edges().begin(), heMesh->Edges().end()); // dynamic edges
 			while (dEs.size() > 0) {
 				auto iter = dEs.begin();
 				auto e = *iter;
@@ -129,14 +129,11 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 
 		{// 3. collapse edges with length < minL
 			printf("3. collapse edges with length < minL\n");
-			unordered_set<Ptr<E>> dEs(heMesh->Edges().begin(), heMesh->Edges().end()); // dynamic edges
+			unordered_set<HEMesh<V>::ptr<E>> dEs(heMesh->Edges().begin(), heMesh->Edges().end()); // dynamic edges
 			while (dEs.size() > 0) {
 				auto iter = dEs.begin();
 				auto e = *iter;
 				dEs.erase(iter);
-
-				if (e->HalfEdge() == nullptr)
-					continue;
 
 				if (e->Length() < minL) {
 					const auto c = e->Centroid();
@@ -144,8 +141,12 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 						if (Point3::Distance(adjV->pos, c) > maxL)
 							continue;
 					}
+					auto eAdjEs = e->AdjEdges();
+
 					auto v = heMesh->CollapseEdge(e, c);
 					if (v != nullptr) {
+						for (auto eAdjE : eAdjEs)
+							dEs.erase(eAdjE);
 						for (auto adjE : v->AdjEdges())
 							dEs.insert(adjE);
 					}
