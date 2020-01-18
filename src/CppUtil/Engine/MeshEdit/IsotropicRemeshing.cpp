@@ -139,7 +139,12 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 					continue;
 
 				if (e->Length() < minL) {
-					auto v = heMesh->CollapseEdge(e, e->Centroid());
+					const auto c = e->Centroid();
+					for (auto adjV : e->AdjVertices()) {
+						if (Point3::Distance(adjV->pos, c) > maxL)
+							continue;
+					}
+					auto v = heMesh->CollapseEdge(e, c);
 					if (v != nullptr) {
 						for (auto adjE : v->AdjEdges())
 							dEs.insert(adjE);
@@ -171,8 +176,7 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 
 		// 5. vertex normal
 		printf("5. vertex normal\n");
-		const size_t nV = heMesh->NumVertices();
-		vector<Vec3> sWNs(nV); // sum weighted normals
+		vector<tuple<Vec3, float>> sWNAs(heMesh->NumVertices(), {Vec3(0.f), 0.f}); // sum Weighted Normal, sum Area
 		for (auto triangle : heMesh->Export()) {
 			auto v0 = triangle[0];
 			auto v1 = triangle[1];
@@ -185,30 +189,41 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 			auto d10 = pos0 - pos1;
 			auto d12 = pos2 - pos1;
 			auto wN = d12.Cross(d10);
+			float area = wN.Norm();
 
-			sWNs[v0] += wN;
-			sWNs[v1] += wN;
-			sWNs[v2] += wN;
+			get<0>(sWNAs[v0]) += wN;
+			get<0>(sWNAs[v1]) += wN;
+			get<0>(sWNAs[v2]) += wN;
+			get<1>(sWNAs[v0]) += area;
+			get<1>(sWNAs[v1]) += area;
+			get<1>(sWNAs[v2]) += area;
 		}
 
 		// 6. tangential smoothing
 		printf("6. tangential smoothing\n");
-		const float w = 0.2f;
+		constexpr float w = 0.2f;// avoid oscillation
 		for (auto v : heMesh->Vertices()) {
-			// offset
-			Vec3 adjVCentroid;
+			// gravity-weighted offset
+			Vec3 gravityCentroid;
+			float sumArea = 0.f;
 			auto adjVs = v->AdjVertices();
-			for (auto adjV : adjVs)
-				adjVCentroid += adjV->pos;
-			adjVCentroid /= static_cast<float>(adjVs.size());
-			Vec3 offset = adjVCentroid - v->pos;
+			for (auto adjV : adjVs) {
+				float area = get<1>(sWNAs[heMesh->Index(adjV)]);
+				sumArea += area;
+				gravityCentroid += area * adjV->pos;
+			}
+			gravityCentroid /= sumArea;
+			Vec3 offset = gravityCentroid - v->pos;
 
 			// normal
-			Vec3 normal = sWNs[heMesh->Index(v)].Normalize();
+			Vec3 normal = get<0>(sWNAs[heMesh->Index(v)]).Normalize();
 
 			// tangent offset
 			Vec3 tangentOffset = offset - offset.Dot(normal) * normal;
-			v->newPos = v->pos + w * tangentOffset;
+			auto newPos = v->pos + w * tangentOffset;
+
+			// project back
+			v->newPos = v->Project(newPos, normal);
 		}
 
 		// 7. update pos
@@ -220,4 +235,16 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 	}
 
 	return true;
+}
+
+const Vec3 IsotropicRemeshing::V::Project(const Vec3& p, const Normalf& norm) const {
+	Ray ray(p, -norm);
+	const auto adjVs = AdjVertices();
+	for (size_t i = 0; i < adjVs.size(); i++) {
+		size_t next = (i + 1) % adjVs.size();
+		auto rst = ray.IntersectTriangle(pos, adjVs[i]->pos, adjVs[next]->pos);
+		if (get<0>(rst)) // isIntersect
+			return ray.At(get<2>(rst));
+	}
+	return p;
 }

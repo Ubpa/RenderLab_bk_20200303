@@ -122,10 +122,10 @@ namespace CppUtil {
 				if (x < static_cast<T>(1e-5)) return static_cast<T>(1);
 				return std::sin(PI * x) / (PI * x);
 			}
-
-#include <CppUtil/Basic/Math.inl>
 		}
 	}
 }
+
+#include <CppUtil/Basic/Math.inl>
 
 #endif // !_BASIC_MATH_MATH_H_

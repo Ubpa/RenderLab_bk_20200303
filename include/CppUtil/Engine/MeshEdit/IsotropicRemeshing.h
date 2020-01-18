@@ -34,6 +34,8 @@ namespace CppUtil {
 			public:
 				V(const Vec3 pos = 0.f) : pos(pos) {}
 			public:
+				const Vec3 Project(const Vec3& p, const Normalf & norm) const;
+			public:
 				Vec3 pos;
 				Vec3 newPos;
 			};
