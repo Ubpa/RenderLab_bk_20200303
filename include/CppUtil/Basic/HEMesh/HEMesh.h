@@ -21,6 +21,9 @@
 
 namespace CppUtil {
 	namespace Basic {
+		// TODO
+		// 1. delete self ptr
+
 		template <typename E, typename P>
 		class EmptyV : public TVertex<EmptyV<E, P>, E, P> {};
 		template <typename V, typename E>
@@ -35,21 +38,32 @@ namespace CppUtil {
 
 		class AllEmpty : public TVertex<AllEmpty, EmptyEP_E<AllEmpty>, EmptyEP_P<AllEmpty>> {};
 
-		// nullptr Polygon is a boundary
-		template<typename V = AllEmpty,
-			typename = std::enable_if_t<std::is_base_of_v<TVertex<V, typename V::E_t, typename V::P_t>, V>>,
-			typename = std::enable_if_t<std::is_base_of_v<TEdge<V, typename V::E_t, typename V::P_t>, typename V::E_t>>,
-			typename = std::enable_if_t<std::is_base_of_v<TPolygon<V, typename V::E_t, typename V::P_t>, typename V::P_t>>
+		template<typename V,
+			typename = std::enable_if_t<std::is_base_of_v<TVertex<V, typename V::_E, typename V::_P>, V>>,
+			typename = std::enable_if_t<std::is_base_of_v<TEdge<V, typename V::_E, typename V::_P>, typename V::_E>>,
+			typename = std::enable_if_t<std::is_base_of_v<TPolygon<V, typename V::_E, typename V::_P>, typename V::_P>>
 		>
-		class HEMesh : public HeapObj {
-		public:
-			using HE = typename V::HE_t;
-			using E = typename V::E_t;
-			using P = typename V::P_t;
+		class _enable_HEMesh { };
+
+		// nullptr Polygon is a boundary
+		template<typename _V = AllEmpty>
+		class HEMesh : public HeapObj, private _enable_HEMesh<_V> {
+		private:
+			// internal use
 			template<typename T>
 			using ptr = HEMesh_ptr<T, HEMesh>;
 			template<typename T>
 			using ptrc = ptr<const T>;
+
+		public:
+			using V = _V;
+			using E = typename V::_E;
+			using P = typename V::_P;
+			using HE = THalfEdge<V, E, P>;
+			using ptrV = ptr<V>;
+			using ptrE = ptr<E>;
+			using ptrP = ptr<P>;
+			using ptrHE = ptr<HE>;
 
 		public:
 			HEMesh() = default;
@@ -134,6 +148,7 @@ namespace CppUtil {
 			// RemoveVertex and AddPolygon
 			const ptr<P> EraseVertex(ptr<V> v);
 
+			// won't collapse in unsafe situation, return nullptr
 			template<typename ...Args>
 			const ptr<V> CollapseEdge(ptr<E> e, Args&& ... args);
 
@@ -151,13 +166,12 @@ namespace CppUtil {
 			// clear and erase
 			template<typename T>
 			void Delete(ptr<T> elem) {
-				elem->Clear();
 				traits<T>::pool(this).recycle(elem.idx);
 				traits<T>::set(this).erase(elem);
 			}
 
 			template<typename T, typename HEMesh_t>
-			friend class HEMesh_ptr;
+			friend class HEMesh_ptr; // use Get
 			template<typename T>
 			T* const Get(int idx) {
 				return &traits<T>::pool(this)[idx];
@@ -176,6 +190,8 @@ namespace CppUtil {
 			vec_pool<E> poolE;
 			vec_pool<P> poolP;
 
+			// ------------------------------
+
 			template<typename T>
 			struct traits;
 			template<typename T>
@@ -184,25 +200,21 @@ namespace CppUtil {
 			struct traits<HE> {
 				static auto& pool(HEMesh* mesh) { return mesh->poolHE; }
 				static auto& set(HEMesh* mesh) { return mesh->halfEdges; }
-				static auto& nextID(HEMesh* mesh) { return mesh->nextID_HE; }
 			};
 			template<>
 			struct traits<V> {
 				static auto& pool(HEMesh* mesh) { return mesh->poolV; }
 				static auto& set(HEMesh* mesh) { return mesh->vertices; }
-				static auto& nextID(HEMesh* mesh) { return mesh->nextID_V; }
 			};
 			template<>
 			struct traits<E> {
 				static auto& pool(HEMesh* mesh) { return mesh->poolE; }
 				static auto& set(HEMesh* mesh) { return mesh->edges; }
-				static auto& nextID(HEMesh* mesh) { return mesh->nextID_E; }
 			};
 			template<>
 			struct traits<P> {
 				static auto& pool(HEMesh* mesh) { return mesh->poolP; }
 				static auto& set(HEMesh* mesh) { return mesh->polygons; }
-				static auto& nextID(HEMesh* mesh) { return mesh->nextID_P; }
 			};
 		};
 	}

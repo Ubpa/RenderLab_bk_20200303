@@ -5,7 +5,7 @@
 namespace CppUtil {
 	namespace Basic {
 		template<typename V, typename E, typename P>
-		const typename THalfEdge<V,E,P>::ptr<THalfEdge<V, E, P>> THalfEdge<V, E, P>::Pre() {
+		const HEMesh_ptr<THalfEdge<V, E, P>, HEMesh<V>> THalfEdge<V, E, P>::Pre() {
 			ptr<THalfEdge> he;
 			for (he = self; he->Next()->Next() != self; he = he->Next())
 				;// empty
@@ -13,7 +13,7 @@ namespace CppUtil {
 		}
 
 		template<typename V, typename E, typename P>
-		const typename THalfEdge<V,E,P>::ptr<THalfEdge<V, E, P>> THalfEdge<V, E, P>::FindFreeIncident(ptr<THalfEdge> begin, ptr<THalfEdge> end) {
+		const HEMesh_ptr<THalfEdge<V, E, P>, HEMesh<V>> THalfEdge<V, E, P>::FindFreeIncident(ptr<THalfEdge> begin, ptr<THalfEdge> end) {
 			assert(begin->End() == end->End());
 
 			for (auto he = begin; he != end; he = he->Next()->Pair()) {
@@ -47,7 +47,7 @@ namespace CppUtil {
 		}
 
 		template<typename V, typename E, typename P>
-		const std::vector<typename THalfEdge<V,E,P>::ptr<THalfEdge<V, E, P>>> THalfEdge<V, E, P>::NextBetween(ptr<THalfEdge> begin, ptr<THalfEdge> end) {
+		const std::vector<HEMesh_ptr<THalfEdge<V, E, P>, HEMesh<V>>> THalfEdge<V, E, P>::NextBetween(ptr<THalfEdge> begin, ptr<THalfEdge> end) {
 			std::vector<ptr<THalfEdge<V, E, P>>> hes;
 			auto he = begin;
 			do {
@@ -58,7 +58,7 @@ namespace CppUtil {
 		}
 
 		template<typename V, typename E, typename P>
-		const std::vector<typename THalfEdge<V,E,P>::ptr<THalfEdge<V, E, P>>> THalfEdge<V, E, P>::RotateNextBetween(ptr<THalfEdge> begin, ptr<THalfEdge> end) {
+		const std::vector<HEMesh_ptr<THalfEdge<V, E, P>, HEMesh<V>>> THalfEdge<V, E, P>::RotateNextBetween(ptr<THalfEdge> begin, ptr<THalfEdge> end) {
 			std::vector<ptr<THalfEdge<V, E, P>>> hes;
 			auto he = begin;
 			do {
@@ -70,12 +70,12 @@ namespace CppUtil {
 
 		template<typename V, typename E, typename P>
 		void THalfEdge<V, E, P>::Clear() {
-			next.reset();
-			pair.reset();
-			origin.reset();
-			edge.reset();
-			polygon.reset();
-			self.reset();
+			next = nullptr;
+			pair = nullptr;
+			origin = nullptr;
+			edge = nullptr;
+			polygon = nullptr;
+			self = nullptr;
 		}
 	}
 }

@@ -29,8 +29,7 @@ namespace CppUtil {
 		private:
 			class V;
 			class E;
-			class P;
-			class V : public Basic::TVertex<V, E, P> {
+			class V : public Basic::TVertex<V, E> {
 			public:
 				V(const Vec3 pos = 0.f) : pos(pos) {}
 			public:
@@ -39,12 +38,11 @@ namespace CppUtil {
 				Vec3 pos;
 				Vec3 newPos;
 			};
-			class E : public Basic::TEdge<V, E, P> {
+			class E : public Basic::TEdge<V, E> {
 			public:
 				float Length() const { return (HalfEdge()->Origin()->pos - HalfEdge()->End()->pos).Norm(); }
 				Vec3 Centroid() const { return (HalfEdge()->Origin()->pos + HalfEdge()->End()->pos) / 2.f; }
 			};
-			class P :public Basic::TPolygon<V, E, P> { };
 		private:
 			Basic::Ptr<TriMesh> triMesh;
 			const Basic::Ptr<Basic::HEMesh<V>> heMesh;

@@ -5,7 +5,7 @@
 namespace CppUtil {
 	namespace Basic {
 		template<typename V, typename E, typename P>
-		const std::vector<typename TVertex<V, E, P>::ptr<E>> TVertex<V, E, P>::AdjEdges() {
+		const std::vector<HEMesh_ptr<E, HEMesh<V>>> TVertex<V, E, P>::AdjEdges() {
 			std::vector<ptr<E>> edges;
 			for (auto he : OutHEs())
 				edges.push_back(he->Edge());
@@ -13,7 +13,7 @@ namespace CppUtil {
 		}
 
 		template<typename V, typename E, typename P>
-		const typename TVertex<V, E, P>::ptr<THalfEdge<V, E, P>> TVertex<V, E, P>::FindFreeIncident() {
+		const HEMesh_ptr<THalfEdge<V, E, P>, HEMesh<V>> TVertex<V, E, P>::FindFreeIncident() {
 			for (auto outHE : OutHEs()) {
 				auto inHE = outHE->Pair();
 				if (inHE->IsFree())
@@ -23,7 +23,7 @@ namespace CppUtil {
 		}
 
 		template<typename V, typename E, typename P>
-		const typename TVertex<V, E, P>::ptr<THalfEdge<V, E, P>> TVertex<V, E, P>::FindHalfEdge(ptr<V> v0, ptr<V> v1) {
+		const HEMesh_ptr<THalfEdge<V, E, P>, HEMesh<V>> TVertex<V, E, P>::FindHalfEdge(ptr<V> v0, ptr<V> v1) {
 			for (auto he : v0->OutHEs()) {
 				if (he->End() == v1)
 					return he;
@@ -32,7 +32,7 @@ namespace CppUtil {
 		}
 
 		template<typename V, typename E, typename P>
-		const std::vector<typename TVertex<V, E, P>::ptr<V>> TVertex<V, E, P>::AdjVertices() {
+		const std::vector<HEMesh_ptr<V, HEMesh<V>>> TVertex<V, E, P>::AdjVertices() {
 			std::vector<ptr<V>> adjVs;
 			for (auto he : OutHEs())
 				adjVs.push_back(he->End());
@@ -40,7 +40,7 @@ namespace CppUtil {
 		}
 
 		template<typename V, typename E, typename P>
-		const typename TVertex<V, E, P>::ptr<E> TVertex<V, E, P>::EdgeBetween(ptr<V> v0, ptr<V> v1) {
+		const HEMesh_ptr<E, HEMesh<V>> TVertex<V, E, P>::EdgeBetween(ptr<V> v0, ptr<V> v1) {
 			for (auto outHE : v0->OutHEs()) {
 				if (outHE->End() == v1)
 					return outHE->Edge();

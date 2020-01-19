@@ -153,7 +153,7 @@ void LoopSubdivision::Kernel() {
 
 	// 3. spilt edges
 	auto edges = heMesh->Edges(); // must copy
-	vector<HEMesh<V>::ptr<E>> newEdges;
+	vector<E::Ptr> newEdges;
 	newEdges.reserve(2 * edges.size());
 	for (auto e : edges) {
 		auto v0 = e->HalfEdge()->Origin();

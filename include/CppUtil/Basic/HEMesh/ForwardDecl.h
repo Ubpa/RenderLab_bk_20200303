@@ -17,6 +17,8 @@ namespace CppUtil {
 		class TPolygon;
 
 		template<typename V, typename, typename, typename>
+		class _enable_HEMesh;
+		template<typename V>
 		class HEMesh;
 
 		template <typename E, typename P>
@@ -43,8 +45,6 @@ namespace CppUtil {
 		public:
 			HEMesh_ptr(HEMesh_t * mesh = nullptr, int idx = -1) : mesh(mesh), idx(idx) {}
 			T* operator->() const { return mesh->Get<std::remove_const_t<T>>(idx); }
-			bool expired() const { return mesh == nullptr && idx == -1; }
-			void reset() { mesh = nullptr; idx = -1; }
 			bool operator==(const HEMesh_ptr& p) const { assert(mesh == p.mesh); return idx == p.idx; }
 			bool operator==(std::nullptr_t) const { return idx == -1; }
 			bool operator<(const HEMesh_ptr& p) const { assert(mesh == p.mesh); return idx < p.idx; }
@@ -55,12 +55,12 @@ namespace CppUtil {
 				idx = p.idx;
 				return *this;
 			}
-			HEMesh_ptr& operator=(std::nullptr_t) { reset(); return *this; }
+			HEMesh_ptr& operator=(std::nullptr_t) { mesh = nullptr; idx = -1; return *this; }
 			operator bool() const { return idx != -1; }
 			operator HEMesh_ptr<const T, HEMesh_t>() const { return HEMesh_ptr<const T, HEMesh_t>(mesh, idx); }
 
 		private:
-			template<typename V, typename, typename, typename>
+			template<typename V>
 			friend class HEMesh;
 			HEMesh_t * mesh;
 			int idx;

@@ -11,18 +11,17 @@ namespace CppUtil {
 		template<typename V, typename E, typename P = EmptyP<V, E>>
 		class TEdge {
 		private:
+			// internal use
 			using HE = THalfEdge<V, E, P>;
-
-		public:
-			using V_t = V;
-			using E_t = E;
-			using P_t = P;
-			using HE_t = HE;
-			using HEMesh_t = HEMesh<V, void, void, void>;
 			template<typename T>
-			using ptr = HEMesh_ptr<T, HEMesh_t>;
+			using ptr = HEMesh_ptr<T, HEMesh<V>>;
 			template<typename T>
 			using ptrc = ptr<const T>;
+
+		public:
+			// external use
+			using Ptr = ptr<E>;
+			using PtrC = ptrc<E>;
 
 		public:
 			const ptr<HE> HalfEdge() { return halfEdge; }
@@ -39,14 +38,13 @@ namespace CppUtil {
 			const std::vector<ptr<HE>> OutHEs();
 			const std::set<ptr<V>> AdjVertices();
 			const std::vector<ptr<E>> AdjEdges();
-			void Clear() { halfEdge.reset(); self.reset(); }
-
-		public:
-			ptr<HE> halfEdge;
+			void Clear() { halfEdge = nullptr; self = nullptr; }
 
 		private:
-			friend class HEMesh<V, void, void, void>;
+			friend class HEMesh<V>; // for self
 			ptr<E> self;
+
+			ptr<HE> halfEdge;
 		};
 	}
 }

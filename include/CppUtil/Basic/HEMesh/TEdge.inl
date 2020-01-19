@@ -5,7 +5,7 @@
 namespace CppUtil {
 	namespace Basic {
 		template<typename V, typename E, typename P>
-		const std::vector<typename TEdge<V, E, P>::ptr<THalfEdge<V, E, P>>> TEdge<V, E, P>::OutHEs() {
+		const std::vector<HEMesh_ptr<THalfEdge<V, E, P>, HEMesh<V>>> TEdge<V, E, P>::OutHEs() {
 			std::vector<ptr<THalfEdge<V, E, P>>> hes;
 			auto he01 = HalfEdge(); // v0 => v1
 			for (auto he = he01->RotateNext(); he != he01; he = he->RotateNext())
@@ -16,7 +16,7 @@ namespace CppUtil {
 		}
 
 		template<typename V, typename E, typename P>
-		const std::set<typename TEdge<V, E, P>::ptr<V>> TEdge<V, E, P>::AdjVertices() {
+		const std::set<HEMesh_ptr<V, HEMesh<V>>> TEdge<V, E, P>::AdjVertices() {
 			std::set<ptr<V>> vertices;
 			for (auto e : OutHEs())
 				vertices.insert(e->End());
@@ -24,7 +24,7 @@ namespace CppUtil {
 		}
 
 		template<typename V, typename E, typename P>
-		const std::vector<typename TEdge<V, E, P>::ptr<E>> TEdge<V, E, P>::AdjEdges() {
+		const std::vector<HEMesh_ptr<E, HEMesh<V>>> TEdge<V, E, P>::AdjEdges() {
 			std::vector<ptr<E>> edges;
 			for (auto he : OutHEs())
 				edges.push_back(he->Edge());

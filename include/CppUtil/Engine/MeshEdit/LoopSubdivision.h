@@ -30,18 +30,16 @@ namespace CppUtil {
 		private:
 			class V;
 			class E;
-			class P;
-			class V : public Basic::TVertex<V, E, P> {
+			class V : public Basic::TVertex<V, E> {
 			public:
 				Vec3 pos;
 				bool isNew = false;
 				Vec3 newPos;
 			};
-			class E : public Basic::TEdge<V, E, P> {
+			class E : public Basic::TEdge<V, E> {
 			public:
 				Vec3 newPos;
 			};
-			class P :public Basic::TPolygon<V, E, P> { };
 		private:
 			Basic::Ptr<TriMesh> triMesh;
 			const Basic::Ptr<Basic::HEMesh<V>> heMesh;
