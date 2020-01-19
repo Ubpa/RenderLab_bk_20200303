@@ -17,6 +17,15 @@ namespace CppUtil {
 		}
 
 		template<typename V, typename E, typename P>
+		void THalfEdge<V, E, P>::Init(ptr<HE> next, ptr<HE> pair, ptr<V> v, ptr<E> e, ptr<P> p) {
+			this->next = next;
+			this->pair = pair;
+			this->origin = v;
+			this->edge = e;
+			this->polygon = p;
+		}
+
+		template<typename V, typename E, typename P>
 		const HEMesh_ptr<THalfEdge<V, E, P>, HEMesh<V>> THalfEdge<V, E, P>::FindFreeIncident(ptr<HE> begin, ptr<HE> end) {
 			assert(begin->End() == end->End());
 

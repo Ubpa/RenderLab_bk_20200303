@@ -21,9 +21,6 @@
 
 namespace CppUtil {
 	namespace Basic {
-		// TODO
-		// 1. delete self ptr
-
 		template <typename E, typename P>
 		class EmptyV : public TVertex<EmptyV<E, P>, E, P> {};
 		template <typename V, typename E>
@@ -135,6 +132,9 @@ namespace CppUtil {
 			//  high-level mesh edit
 			// ----------------------
 
+			// RemoveVertex and AddPolygon
+			const ptr<P> EraseVertex(ptr<V> v);
+
 			// edge's halfedge : v0=>v1
 			// nweV's halfedge : newV => v1
 			template<typename ...Args>
@@ -146,15 +146,12 @@ namespace CppUtil {
 			template<typename ...Args>
 			const ptr<E> ConnectVertex(ptr<HE> he0, ptr<HE> he1, Args&& ... args);
 
+			// counter-clock, remain e in container, won't break iteration
+			bool FlipEdge(ptr<E> e);
+
 			// delete e
 			template<typename ...Args>
 			const ptr<V> SpiltEdge(ptr<E> e, Args&& ... args);
-
-			// counter-clock, remain e in container, won't break iteration
-			bool RotateEdge(ptr<E> e);
-
-			// RemoveVertex and AddPolygon
-			const ptr<P> EraseVertex(ptr<V> v);
 
 			// won't collapse in unsafe situation, return nullptr
 			template<typename ...Args>

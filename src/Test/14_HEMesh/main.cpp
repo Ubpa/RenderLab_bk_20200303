@@ -153,8 +153,8 @@ int main() {
 		mesh->AddPolygon({ he01,he12,he20 }, "P0");
 		mesh->AddPolygon({ he02,he23,he30 }, "P1");
 
-		auto v = mesh->SpiltEdge(e02);
-		v->name = "v4";
+		auto v4 = mesh->SpiltEdge(e02, "v4");
+		auto v5 = mesh->SpiltEdge(e01, "v5");
 
 		Print(mesh);
 	}

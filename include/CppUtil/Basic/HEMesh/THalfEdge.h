@@ -49,6 +49,7 @@ namespace CppUtil {
 			void SetOrigin(ptr<V> v) { origin = v; }
 			void SetEdge(ptr<E> e) { edge = e; }
 			void SetPolygon(ptr<P> p) { polygon = p; }
+			void Init(ptr<HE> next, ptr<HE> pair, ptr<V> v, ptr<E> e, ptr<P> p);
 
 			bool IsFree() const { return polygon == nullptr; }
 			bool IsBoundary() const { return polygon == nullptr; }
