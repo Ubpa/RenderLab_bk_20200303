@@ -51,10 +51,6 @@ namespace CppUtil {
 			template<typename T>
 			using ptrc = ptr<const T>;
 
-		private:
-			template<typename T>
-			using ID = HEMesh_ID<T>;
-
 		public:
 			HEMesh() = default;
 			HEMesh(const std::vector<std::vector<size_t>>& polygons) { Init(polygons); }
@@ -147,9 +143,7 @@ namespace CppUtil {
 			const ptr<T> New(Args&& ... args) {
 				auto idx = traits<T>::pool(this).request(std::forward<Args>(args)...);
 				auto& elem = traits<T>::pool(this).at(idx);
-				ID<T> id(traits<T>::nextID(this)++);
-				traits<T>::table(this)[id] = idx;
-				elem.self = ptr<T>(This<HEMesh>(), id);
+				elem.self = ptr<T>(this, static_cast<int>(idx));
 				traits<T>::set(this).insert(elem.self);
 				return elem.self;
 			}
@@ -158,22 +152,15 @@ namespace CppUtil {
 			template<typename T>
 			void Delete(ptr<T> elem) {
 				elem->Clear();
-				auto target = traits<T>::table(this).find(elem.ID);
-				size_t idx = target->second;
-				traits<T>::table(this).erase(target);
-				traits<T>::pool(this).recycle(idx);
+				traits<T>::pool(this).recycle(elem.idx);
 				traits<T>::set(this).erase(elem);
 			}
 
 			template<typename T, typename HEMesh_t>
 			friend class HEMesh_ptr;
 			template<typename T>
-			T* const Get(ID<T> ID) {
-				auto target = traits<T>::table(this).find(ID);
-				if (target == traits<T>::table(this).end())
-					return nullptr;
-				else
-					return &traits<T>::pool(this)[target->second];
+			T* const Get(int idx) {
+				return &traits<T>::pool(this)[idx];
 			}
 		protected:
 			virtual ~HEMesh() = default;
@@ -189,16 +176,6 @@ namespace CppUtil {
 			vec_pool<E> poolE;
 			vec_pool<P> poolP;
 
-			std::unordered_map<ID<HE>, size_t> tableHE;
-			std::unordered_map<ID<V>, size_t> tableV;
-			std::unordered_map<ID<E>, size_t> tableE;
-			std::unordered_map<ID<P>, size_t> tableP;
-
-			int nextID_HE = 0;
-			int nextID_V = 0;
-			int nextID_E = 0;
-			int nextID_P = 0;
-
 			template<typename T>
 			struct traits;
 			template<typename T>
@@ -206,28 +183,24 @@ namespace CppUtil {
 			template<>
 			struct traits<HE> {
 				static auto& pool(HEMesh* mesh) { return mesh->poolHE; }
-				static auto& table(HEMesh* mesh) { return mesh->tableHE; }
 				static auto& set(HEMesh* mesh) { return mesh->halfEdges; }
 				static auto& nextID(HEMesh* mesh) { return mesh->nextID_HE; }
 			};
 			template<>
 			struct traits<V> {
 				static auto& pool(HEMesh* mesh) { return mesh->poolV; }
-				static auto& table(HEMesh* mesh) { return mesh->tableV; }
 				static auto& set(HEMesh* mesh) { return mesh->vertices; }
 				static auto& nextID(HEMesh* mesh) { return mesh->nextID_V; }
 			};
 			template<>
 			struct traits<E> {
 				static auto& pool(HEMesh* mesh) { return mesh->poolE; }
-				static auto& table(HEMesh* mesh) { return mesh->tableE; }
 				static auto& set(HEMesh* mesh) { return mesh->edges; }
 				static auto& nextID(HEMesh* mesh) { return mesh->nextID_E; }
 			};
 			template<>
 			struct traits<P> {
 				static auto& pool(HEMesh* mesh) { return mesh->poolP; }
-				static auto& table(HEMesh* mesh) { return mesh->tableP; }
 				static auto& set(HEMesh* mesh) { return mesh->polygons; }
 				static auto& nextID(HEMesh* mesh) { return mesh->nextID_P; }
 			};

@@ -3,6 +3,7 @@
 #define _CPPUTIL_BASIC_HEMESH_FORWARDDECL_H_
 
 #include <CppUtil/Basic/Ptr.h>
+#include <assert.h>
 
 namespace CppUtil {
 	namespace Basic {
@@ -32,59 +33,37 @@ namespace CppUtil {
 
 		class AllEmpty;
 
-		template<typename T> // enable
-		struct HEMesh_ID {
-			struct hash {
-				size_t operator()(const HEMesh_ID& id) const noexcept {
-					return std::hash<int>()(id.val);
-				}
-			};
-			explicit HEMesh_ID(int val = -1) : val(val) {}
-			bool expired() const { return val == -1; }
-			void reset() { val = -1; }
-			bool operator==(const HEMesh_ID& id) const = default;
-			bool operator<(const HEMesh_ID& id) const { return val < id.val; }
-			operator HEMesh_ID<const T>() const { return HEMesh_ID<const T>(val); }
-			operator HEMesh_ID<std::remove_const_t<T>>() const { return HEMesh_ID<std::remove_const_t<T>>(val); }
-			int val;
-		};
-
 		template<typename T, typename HEMesh_t>
 		class HEMesh_ptr {
 		public:
 			using element_type = T;
 			using MeshT = HEMesh_t;
-
-		private:
-			using IDt = HEMesh_ID<std::remove_const_t<T>>;
 		public:
-			struct hash {
-				size_t operator()(const HEMesh_ptr& p) const noexcept {
-					return typename IDt::hash()(p.ID);
-				}
-			};
+			size_t Hash() const { return std::hash<int>()(idx); }
 		public:
-			HEMesh_ptr(Ptr<HEMesh_t> mesh = nullptr, IDt ID = IDt()) : mesh(mesh), ID(ID) {}
-			HEMesh_ptr(std::nullptr_t) : HEMesh_ptr(nullptr, IDt(-1)) { }
-			T* operator->() { return mesh.lock()->Get(ID); }
-			T* const operator->() const { return const_cast<HEMesh_ptr*>(this)->operator->(); }
-			bool expired() const { return ID.expired() || mesh.expired(); }
-			void reset() { mesh.reset(); ID.reset(); }
-			bool operator==(const HEMesh_ptr& p) const { return mesh.lock() == p.mesh.lock() && ID == p.ID; }
-			bool operator<(const HEMesh_ptr& p) const { return mesh.lock() < p.mesh.lock() || (mesh.lock() == p.mesh.lock() && ID < p.ID); }
-			bool operator!=(const HEMesh_ptr& p) const { return !(this->operator==(p)); }
+			HEMesh_ptr(HEMesh_t * mesh = nullptr, int idx = -1) : mesh(mesh), idx(idx) {}
+			T* operator->() const { return mesh->Get<std::remove_const_t<T>>(idx); }
+			bool expired() const { return mesh == nullptr && idx == -1; }
+			void reset() { mesh = nullptr; idx = -1; }
+			bool operator==(const HEMesh_ptr& p) const { assert(mesh == p.mesh); return idx == p.idx; }
+			bool operator==(std::nullptr_t) const { return idx == -1; }
+			bool operator<(const HEMesh_ptr& p) const { assert(mesh == p.mesh); return idx < p.idx; }
+			bool operator!=(const HEMesh_ptr& p) const { assert(mesh == p.mesh); return idx != p.idx; }
+			bool operator!=(std::nullptr_t) const { return idx != -1; }
 			HEMesh_ptr& operator=(const HEMesh_ptr& p) {
-				mesh = p.mesh.lock();
-				ID = p.ID;
+				mesh = p.mesh;
+				idx = p.idx;
 				return *this;
 			}
-			operator bool() const { return this->operator!=(nullptr); }
-			operator HEMesh_ptr<const T, HEMesh_t>() const { return HEMesh_ptr<const T, HEMesh_t>(mesh.lock(), ID); }
+			HEMesh_ptr& operator=(std::nullptr_t) { reset(); return *this; }
+			operator bool() const { return idx != -1; }
+			operator HEMesh_ptr<const T, HEMesh_t>() const { return HEMesh_ptr<const T, HEMesh_t>(mesh, idx); }
+
 		private:
 			template<typename V, typename, typename, typename>
 			friend class HEMesh;
-			WPtr<HEMesh_t> mesh;
-			IDt ID;
+			HEMesh_t * mesh;
+			int idx;
 		};
 
 		// use _ to avoid _Vector_alloc, base class of vector
@@ -96,16 +75,10 @@ namespace CppUtil {
 }
 
 namespace std {
-	template<typename T>
-	struct hash<CppUtil::Basic::HEMesh_ID<T>> {
-		size_t operator()(const CppUtil::Basic::HEMesh_ID<T>& id) const {
-			return typename CppUtil::Basic::HEMesh_ID<T>::hash()(id);
-		}
-	};
 	template<typename T, typename HEMesh_t>
 	struct hash<CppUtil::Basic::HEMesh_ptr<T, HEMesh_t>> {
 		size_t operator()(const CppUtil::Basic::HEMesh_ptr<T, HEMesh_t>& p) const {
-			return typename CppUtil::Basic::HEMesh_ptr<T, HEMesh_t>::hash()(p);
+			return p.Hash();
 		}
 	};
 }

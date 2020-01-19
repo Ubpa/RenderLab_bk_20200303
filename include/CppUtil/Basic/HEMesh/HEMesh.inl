@@ -387,9 +387,16 @@ namespace CppUtil {
 		template<typename V, typename _0, typename _1, typename _2>
 		void HEMesh<V, _0, _1, _2>::Reserve(size_t n) {
 			vertices.reserve(n);
+			poolV.reserve(n);
+
 			halfEdges.reserve(6 * n);
+			poolHE.reserve(6 * n);
+
 			edges.reserve(3 * n);
+			poolE.reserve(3 * n);
+
 			polygons.reserve(2 * n);
+			poolP.reserve(2 * n);
 		}
 
 		template<typename V, typename _0, typename _1, typename _2>

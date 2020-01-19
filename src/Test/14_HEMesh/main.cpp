@@ -13,12 +13,14 @@ class P;
 class V : public TVertex<V,E,P> {
 public:
 	V(const string & name = "NO_NAME") : name(name){}
+	~V() { printf("%s dead\n", name.c_str()); }
 public:
 	string name;
 };
 class E : public TEdge<V, E, P> {
 public:
 	E(const string& pre = "E") : pre(pre){}
+	~E() { printf("%s dead\n", pre.c_str()); }
 public:
 	const string Name() const { return "[" + pre + "]" + HalfEdge()->Origin()->name + "-" + HalfEdge()->End()->name; }
 private:
@@ -27,6 +29,7 @@ private:
 class P : public TPolygon<V, E, P> {
 public:
 	P(const string& pre = "P") :pre(pre) {}
+	~P() { printf("%s dead\n", pre.c_str()); }
 public:
 	const string Name() const {
 		string name = "[" + pre + "]";
@@ -95,7 +98,6 @@ int main() {
 		auto v1 = mesh->AddVertex("v1");
 		auto v2 = mesh->AddVertex("v2");
 		Print(mesh);
-
 		cout << "add e01, e12, e21" << endl;
 		auto e01 = mesh->AddEdge(v0, v1, "E0");
 		auto e12 = mesh->AddEdge(v1, v2, "E1");
@@ -108,7 +110,6 @@ int main() {
 
 		cout << e01->Name() << " is " << (e01->IsBoundary() ? "" : "not ") << "a boundary" << endl;
 		cout << v0->name << " is " << (v0->IsBoundary() ? "" : "not ") << "a boundary" << endl;
-
 		cout << "remove p0" << endl;
 		mesh->RemovePolygon(p0);
 		Print(mesh);
