@@ -38,16 +38,24 @@ namespace CppUtil {
 
 		class AllEmpty : public TVertex<AllEmpty, EmptyEP_E<AllEmpty>, EmptyEP_P<AllEmpty>> {};
 
-		template<typename V,
-			typename = std::enable_if_t<std::is_base_of_v<TVertex<V, typename V::_E, typename V::_P>, V>>,
-			typename = std::enable_if_t<std::is_base_of_v<TEdge<V, typename V::_E, typename V::_P>, typename V::_E>>,
-			typename = std::enable_if_t<std::is_base_of_v<TPolygon<V, typename V::_E, typename V::_P>, typename V::_P>>
-		>
-		class _enable_HEMesh { };
+		template<typename V>
+		class _enable_HEMesh {
+		private:
+			using E = typename V::_E;
+			using P = typename V::_P;
+		public:
+			template<typename = std::enable_if_t<std::is_base_of_v<TVertex<V, E, P>, V>>,
+				typename = std::enable_if_t<std::is_base_of_v<TEdge<V, E, P>, E>>,
+				typename = std::enable_if_t<std::is_base_of_v<TPolygon<V, E, P>, P>>
+			>
+			class type {};
+		};
+		template<typename V>
+		using _enable_HEMesh_t = typename _enable_HEMesh<V>::type<>;
 
 		// nullptr Polygon is a boundary
 		template<typename _V = AllEmpty>
-		class HEMesh : public HeapObj, private _enable_HEMesh<_V> {
+		class HEMesh : public HeapObj, private _enable_HEMesh_t<_V> {
 		private:
 			// internal use
 			template<typename T>
@@ -157,10 +165,9 @@ namespace CppUtil {
 			template<typename T, typename ... Args>
 			const ptr<T> New(Args&& ... args) {
 				auto idx = traits<T>::pool(this).request(std::forward<Args>(args)...);
-				auto& elem = traits<T>::pool(this).at(idx);
-				elem.self = ptr<T>(this, static_cast<int>(idx));
-				traits<T>::set(this).insert(elem.self);
-				return elem.self;
+				auto p = ptr<T>(this, static_cast<int>(idx));
+				traits<T>::set(this).insert(p);
+				return p;
 			}
 
 			// clear and erase

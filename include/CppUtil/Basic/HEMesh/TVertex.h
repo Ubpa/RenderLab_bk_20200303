@@ -25,8 +25,9 @@ namespace CppUtil {
 			using PtrC = ptrc<V>;
 
 		private:
-			// just for _enable_HEMesh
-			friend class _enable_HEMesh<V, void, void, void>;
+			// for _enable_HEMesh
+			friend class _enable_HEMesh<V>;
+			friend class HEMesh<V>;
 			using _E = E;
 			using _P = P;
 
@@ -52,21 +53,18 @@ namespace CppUtil {
 			const std::vector<ptr<V>> AdjVertices();
 			const std::vector<ptrc<V>> AdjVertices() const { return Const<std::vector, V>(const_cast<TVertex*>(this)->AdjVertices()); }
 
-			static const ptr<E> EdgeBetween(ptr<V> v0, ptr<V> v1);
-			const ptr<E> EdgeWith(ptr<V> v) { return EdgeBetween(self, v); }
+			const ptr<E> EdgeWith(ptr<V> v);
+			static const ptr<E> EdgeBetween(ptr<V> v0, ptr<V> v1) { return v0->EdgeWith(v1); }
 
-			static bool IsConnected(ptr<V> v0, ptr<V> v1) { return EdgeBetween(v0, v1) != nullptr; }
-			bool IsConnectedWith(ptr<V> v) const { return IsConnected(self, v); }
+			bool IsConnectedWith(ptr<V> v) const { return const_cast<TVertex*>(this)->EdgeWith(v); }
+			static bool IsConnected(ptr<V> v0, ptr<V> v1) { return v0->IsConnectedWith(v1); }
 			bool IsBoundary() const;
 
 			size_t Degree() const { return OutHEs().size(); }
 
-			void Clear() { halfEdge = nullptr; self = nullptr; }
+			void Clear() { halfEdge = nullptr; }
 
 		private:
-			friend class HEMesh<V>; // for self
-			ptr<V> self;
-
 			ptr<HE> halfEdge;
 		};
 	}

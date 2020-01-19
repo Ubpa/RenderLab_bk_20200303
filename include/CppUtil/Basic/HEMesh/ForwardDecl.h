@@ -16,7 +16,7 @@ namespace CppUtil {
 		template<typename V, typename E, typename P>
 		class TPolygon;
 
-		template<typename V, typename, typename, typename>
+		template<typename V>
 		class _enable_HEMesh;
 		template<typename V>
 		class HEMesh;

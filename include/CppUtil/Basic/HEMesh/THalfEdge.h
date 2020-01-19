@@ -24,6 +24,7 @@ namespace CppUtil {
 			using PtrC = ptrc<HE>;
 
 		public:
+			const ptr<HE> Self() { return pair->pair; }
 			const ptr<HE> Next() { return next; }
 			const ptr<HE> Pair() { return pair; }
 			const ptr<V> Origin() { return origin; }
@@ -60,20 +61,17 @@ namespace CppUtil {
 			// [begin, end), if begin == end, return a loop
 			static const std::vector<ptr<HE>> RotateNextBetween(ptr<HE> begin, ptr<HE> end);
 			// [this, end), NextBetween(this, end);
-			const std::vector<ptr<HE>> NextTo(ptr<HE> end) { return NextBetween(self, end); }
+			const std::vector<ptr<HE>> NextTo(ptr<HE> end) { return NextBetween(Self(), end); }
 			// [this, end), RotateNextBetween(this, end);
-			const std::vector<ptr<HE>> RotateNextTo(ptr<HE> end) { return RotateNextBetween(self, end); }
+			const std::vector<ptr<HE>> RotateNextTo(ptr<HE> end) { return RotateNextBetween(Self(), end); }
 			// NextBetween(this, this), a loop from this to this
-			const std::vector<ptr<HE>> NextLoop() { return NextBetween(self, self); }
+			const std::vector<ptr<HE>> NextLoop() { return NextBetween(Self(), Self()); }
 			// RotateNextBetween(this, this), a loop from this to this
-			const std::vector<ptr<HE>> RotateNextLoop() { return RotateNextBetween(self, self); }
+			const std::vector<ptr<HE>> RotateNextLoop() { return RotateNextBetween(Self(), Self()); }
 
 			void Clear();
 
 		private:
-			friend class HEMesh<V>; // for self
-			ptr<HE> self;
-
 			ptr<HE> next;
 			ptr<HE> pair;
 			

@@ -40,9 +40,9 @@ namespace CppUtil {
 		}
 
 		template<typename V, typename E, typename P>
-		const HEMesh_ptr<E, HEMesh<V>> TVertex<V, E, P>::EdgeBetween(ptr<V> v0, ptr<V> v1) {
-			for (auto outHE : v0->OutHEs()) {
-				if (outHE->End() == v1)
+		const HEMesh_ptr<E, HEMesh<V>> TVertex<V, E, P>::EdgeWith(ptr<V> v) {
+			for (auto outHE : OutHEs()) {
+				if (outHE->End() == v)
 					return outHE->Edge();
 			}
 

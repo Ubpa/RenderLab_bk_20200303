@@ -34,12 +34,9 @@ namespace CppUtil {
 			const std::vector<ptr<E>> BoundaryEdges();
 			const std::vector<ptr<V>> BoundaryVertice();
 
-			void Clear() { halfEdge = nullptr; self = nullptr; }
+			void Clear() { halfEdge = nullptr; }
 
 		private:
-			friend class HEMesh<V>; // for self
-			ptr<P> self;
-
 			ptr<HE> halfEdge;
 		};
 	}

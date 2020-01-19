@@ -38,12 +38,9 @@ namespace CppUtil {
 			const std::vector<ptr<HE>> OutHEs();
 			const std::set<ptr<V>> AdjVertices();
 			const std::vector<ptr<E>> AdjEdges();
-			void Clear() { halfEdge = nullptr; self = nullptr; }
+			void Clear() { halfEdge = nullptr; }
 
 		private:
-			friend class HEMesh<V>; // for self
-			ptr<E> self;
-
 			ptr<HE> halfEdge;
 		};
 	}

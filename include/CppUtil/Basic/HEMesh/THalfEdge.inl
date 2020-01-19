@@ -7,7 +7,7 @@ namespace CppUtil {
 		template<typename V, typename E, typename P>
 		const HEMesh_ptr<THalfEdge<V, E, P>, HEMesh<V>> THalfEdge<V, E, P>::Pre() {
 			ptr<THalfEdge> he;
-			for (he = self; he->Next()->Next() != self; he = he->Next())
+			for (he = Self(); he->Next()->Next() != Self(); he = he->Next())
 				;// empty
 			return he->Next();
 		}
@@ -75,7 +75,6 @@ namespace CppUtil {
 			origin = nullptr;
 			edge = nullptr;
 			polygon = nullptr;
-			self = nullptr;
 		}
 	}
 }
