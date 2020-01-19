@@ -27,10 +27,10 @@ namespace CppUtil {
 			const ptr<HE> HalfEdge() { return halfEdge; }
 			const ptrc<HE> HalfEdge() const { return const_cast<TEdge*>(this)->HalfEdge(); }
 
+			void SetHalfEdge(ptr<HE> he) { halfEdge = he; }
+
 			bool IsBoundary() const { return HalfEdge()->IsBoundary() || HalfEdge()->Pair()->IsBoundary(); }
 			bool IsFree() const { return HalfEdge()->IsFree() && HalfEdge()->Pair()->IsFree(); }
-
-			void SetHalfEdge(ptr<HE> he) { halfEdge = he; }
 
 			// clockwise
 			// + [he.RotateNext, he.RotateNext.RotateNext, ..., he)
@@ -38,6 +38,7 @@ namespace CppUtil {
 			const std::vector<ptr<HE>> OutHEs();
 			const std::set<ptr<V>> AdjVertices();
 			const std::vector<ptr<E>> AdjEdges();
+
 			void Clear() { halfEdge = nullptr; }
 
 		private:

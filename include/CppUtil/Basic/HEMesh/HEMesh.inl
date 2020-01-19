@@ -329,7 +329,7 @@ namespace CppUtil {
 					}
 					auto u = vertices[polygon[i]];
 					auto v = vertices[polygon[next]];
-					auto he = V::FindHalfEdge(u, v);
+					auto he = u->HalfEdgeTo(v);
 					if (!he)
 						he = AddEdge(u, v)->HalfEdge();
 					heLoop.push_back(he);
@@ -640,24 +640,24 @@ namespace CppUtil {
 			auto p01 = he01->Polygon();
 			auto p10 = he10->Polygon();
 
-			std::vector<ptr<V>> comV;
+			std::vector<ptr<V>> comVs;
 			auto v0AdjVs = v0->AdjVertices();
 			auto v1AdjVs = v1->AdjVertices();
 			sort(v0AdjVs.begin(), v0AdjVs.end());
 			sort(v1AdjVs.begin(), v1AdjVs.end());
 			std::set_intersection(v0AdjVs.begin(), v0AdjVs.end(), v1AdjVs.begin(), v1AdjVs.end(),
-				std::insert_iterator<std::vector<ptr<V>>>(comV, comV.begin()));
+				std::insert_iterator<std::vector<ptr<V>>>(comVs, comVs.begin()));
 
 			size_t limit = 2;
 			if (p01->Degree() > 3)
 				limit -= 1;
 			if (p10->Degree() > 3)
 				limit -= 1;
-			if (comV.size() > limit)
+			if (comVs.size() > limit)
 			{
 #if !NDEBUG
 				printf("WARNNING::HEMesh::CollapseEdge:\n"
-					"\t""|N(v0) กษ N(v1)| > %zd\n", limit);
+					"\t""|N(v0) กษ N(v1)| (%zd)> %zd\n", comVs.size(), limit);
 #endif
 				return nullptr;
 			}

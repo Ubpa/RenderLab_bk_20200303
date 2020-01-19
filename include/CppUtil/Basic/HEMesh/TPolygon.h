@@ -28,9 +28,9 @@ namespace CppUtil {
 			void SetHalfEdge(ptr<HE> he) { halfEdge = he; }
 
 			static bool IsBoundary(ptr<P> p) { return p == nullptr; }
-			
-			const std::vector<ptr<HE>> BoundaryHEs() { return HalfEdge()->NextLoop(); }
 			size_t Degree() const { return static_cast<int>(const_cast<TPolygon*>(this)->BoundaryHEs().size()); }
+
+			const std::vector<ptr<HE>> BoundaryHEs() { return HalfEdge()->NextLoop(); }
 			const std::vector<ptr<E>> BoundaryEdges();
 			const std::vector<ptr<V>> BoundaryVertice();
 

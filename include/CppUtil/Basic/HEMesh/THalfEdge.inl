@@ -6,14 +6,18 @@ namespace CppUtil {
 	namespace Basic {
 		template<typename V, typename E, typename P>
 		const HEMesh_ptr<THalfEdge<V, E, P>, HEMesh<V>> THalfEdge<V, E, P>::Pre() {
-			ptr<THalfEdge> he;
-			for (he = Self(); he->Next()->Next() != Self(); he = he->Next())
-				;// empty
-			return he->Next();
+			auto self = Self();
+			auto he = self;
+			auto next = he->Next();
+			do {
+				he = next;
+				next = he->Next();
+			} while (next != self);
+			return he;
 		}
 
 		template<typename V, typename E, typename P>
-		const HEMesh_ptr<THalfEdge<V, E, P>, HEMesh<V>> THalfEdge<V, E, P>::FindFreeIncident(ptr<THalfEdge> begin, ptr<THalfEdge> end) {
+		const HEMesh_ptr<THalfEdge<V, E, P>, HEMesh<V>> THalfEdge<V, E, P>::FindFreeIncident(ptr<HE> begin, ptr<HE> end) {
 			assert(begin->End() == end->End());
 
 			for (auto he = begin; he != end; he = he->Next()->Pair()) {
@@ -25,7 +29,7 @@ namespace CppUtil {
 		}
 
 		template<typename V, typename E, typename P>
-		bool THalfEdge<V, E, P>::MakeAdjacent(ptr<THalfEdge> inHE, ptr<THalfEdge> outHE) {
+		bool THalfEdge<V, E, P>::MakeAdjacent(ptr<HE> inHE, ptr<HE> outHE) {
 			assert(inHE->End() == outHE->Origin());
 
 			if (inHE->Next() == outHE)
@@ -47,8 +51,8 @@ namespace CppUtil {
 		}
 
 		template<typename V, typename E, typename P>
-		const std::vector<HEMesh_ptr<THalfEdge<V, E, P>, HEMesh<V>>> THalfEdge<V, E, P>::NextBetween(ptr<THalfEdge> begin, ptr<THalfEdge> end) {
-			std::vector<ptr<THalfEdge<V, E, P>>> hes;
+		const std::vector<HEMesh_ptr<THalfEdge<V, E, P>, HEMesh<V>>> THalfEdge<V, E, P>::NextBetween(ptr<HE> begin, ptr<HE> end) {
+			std::vector<ptr<HE>> hes;
 			auto he = begin;
 			do {
 				hes.push_back(he);
@@ -58,8 +62,8 @@ namespace CppUtil {
 		}
 
 		template<typename V, typename E, typename P>
-		const std::vector<HEMesh_ptr<THalfEdge<V, E, P>, HEMesh<V>>> THalfEdge<V, E, P>::RotateNextBetween(ptr<THalfEdge> begin, ptr<THalfEdge> end) {
-			std::vector<ptr<THalfEdge<V, E, P>>> hes;
+		const std::vector<HEMesh_ptr<THalfEdge<V, E, P>, HEMesh<V>>> THalfEdge<V, E, P>::RotateNextBetween(ptr<HE> begin, ptr<HE> end) {
+			std::vector<ptr<HE>> hes;
 			auto he = begin;
 			do {
 				hes.push_back(he);

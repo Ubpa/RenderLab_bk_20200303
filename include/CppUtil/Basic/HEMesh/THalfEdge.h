@@ -24,7 +24,6 @@ namespace CppUtil {
 			using PtrC = ptrc<HE>;
 
 		public:
-			const ptr<HE> Self() { return pair->pair; }
 			const ptr<HE> Next() { return next; }
 			const ptr<HE> Pair() { return pair; }
 			const ptr<V> Origin() { return origin; }
@@ -53,7 +52,9 @@ namespace CppUtil {
 
 			bool IsFree() const { return polygon == nullptr; }
 			bool IsBoundary() const { return polygon == nullptr; }
+
 			static const ptr<HE> FindFreeIncident(ptr<HE> begin, ptr<HE> end);
+
 			static bool MakeAdjacent(ptr<HE> inHE, ptr<HE> outHE);
 
 			// [begin, end), if begin == end, return a loop
@@ -70,6 +71,10 @@ namespace CppUtil {
 			const std::vector<ptr<HE>> RotateNextLoop() { return RotateNextBetween(Self(), Self()); }
 
 			void Clear();
+
+		private:
+			const ptr<HE> Self() { return Pair()->Pair(); }
+			const ptrc<HE> Self() const { return const_cast<HE*>(this)->Self(); }
 
 		private:
 			ptr<HE> next;
