@@ -17,9 +17,10 @@ using namespace CppUtil;
 using namespace CppUtil::Basic;
 using namespace CppUtil::Engine;
 using namespace std;
+using namespace Ubpa;
 
 LoopSubdivision::LoopSubdivision(Basic::Ptr<TriMesh> triMesh)
-	: heMesh(HEMesh<V>::New()) { Init(triMesh); }
+	: heMesh(make_shared<HEMesh<V>>()) { Init(triMesh); }
 
 void LoopSubdivision::Clear() {
 	triMesh = nullptr;
@@ -175,7 +176,7 @@ void LoopSubdivision::Kernel() {
 		if (e->HalfEdge()->Origin()->isNew + e->HalfEdge()->Pair()->Origin()->isNew != 1 )
 			continue;
 
-		heMesh->RotateEdge(e);
+		heMesh->FlipEdge(e);
 	}
 
 	// 5. update vertex pos

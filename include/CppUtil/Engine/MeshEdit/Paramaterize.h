@@ -3,8 +3,6 @@
 #define _CPPUTIL_ENGINE_MESHEDIT_PARAMATERIZE_H_
 
 #include <CppUtil/Basic/HeapObj.h>
-#include <CppUtil/Basic/HEMesh/HEMesh.h>
-#include <CppUtil/Basic/UGM/UGM.h>
 
 namespace CppUtil {
 	namespace Engine {

@@ -2,8 +2,9 @@
 #define _CPPUTIL_ENGINE_MESHEDIT_ISOTROPICREMESHING_H_
 
 #include <CppUtil/Basic/HeapObj.h>
-#include <CppUtil/Basic/HEMesh/HEMesh.h>
 #include <CppUtil/Basic/UGM/UGM.h>
+
+#include <3rdParty/HEMesh/HEMesh.h>
 
 namespace CppUtil {
 	namespace Engine {
@@ -29,7 +30,7 @@ namespace CppUtil {
 		private:
 			class V;
 			class E;
-			class V : public Basic::TVertex<V, E> {
+			class V : public Ubpa::TVertex<V, E> {
 			public:
 				V(const Vec3 pos = 0.f) : pos(pos) {}
 			public:
@@ -38,14 +39,14 @@ namespace CppUtil {
 				Vec3 pos;
 				Vec3 newPos;
 			};
-			class E : public Basic::TEdge<V, E> {
+			class E : public Ubpa::TEdge<V, E> {
 			public:
 				float Length() const { return (HalfEdge()->Origin()->pos - HalfEdge()->End()->pos).Norm(); }
 				Vec3 Centroid() const { return (HalfEdge()->Origin()->pos + HalfEdge()->End()->pos) / 2.f; }
 			};
 		private:
 			Basic::Ptr<TriMesh> triMesh;
-			const Basic::Ptr<Basic::HEMesh<V>> heMesh;
+			const Basic::Ptr<Ubpa::HEMesh<V>> heMesh;
 		};
 	}
 }

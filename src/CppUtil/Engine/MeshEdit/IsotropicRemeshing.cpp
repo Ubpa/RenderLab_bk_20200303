@@ -12,9 +12,10 @@ using namespace CppUtil;
 using namespace CppUtil::Basic;
 using namespace CppUtil::Engine;
 using namespace std;
+using namespace Ubpa;
 
 IsotropicRemeshing::IsotropicRemeshing(Ptr<TriMesh> triMesh)
-	: heMesh(HEMesh<V>::New()) {
+	: heMesh(make_shared<HEMesh<V>>()) {
 	Init(triMesh);
 }
 
@@ -172,7 +173,7 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 			auto cost = pow(v0d - D, 2) + pow(v1d - D, 2) + pow(v2d - D, 2) + pow(v3d - D, 2);
 			auto flipCost = pow(v0d - 1 - D, 2) + pow(v1d - 1 - D, 2) + pow(v2d + 1 - D, 2) + pow(v3d + 1 - D, 2);
 			if (flipCost < cost)
-				heMesh->RotateEdge(e);
+				heMesh->FlipEdge(e);
 		}
 
 		// 5. vertex normal

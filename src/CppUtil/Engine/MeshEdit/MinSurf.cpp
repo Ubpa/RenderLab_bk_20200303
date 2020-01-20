@@ -9,9 +9,10 @@ using namespace CppUtil::Basic;
 using namespace CppUtil::Engine;
 using namespace std;
 using namespace Eigen;
+using namespace Ubpa;
 
 MinSurf::MinSurf(Ptr<TriMesh> triMesh)
-	: heMesh(HEMesh<V>::New())
+	: heMesh(make_shared<HEMesh<V>>())
 {
 	Init(triMesh);
 }

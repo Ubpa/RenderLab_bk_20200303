@@ -1,11 +1,12 @@
-#include <CppUtil/Basic/HEMesh/HEMesh.h>
-#include <CppUtil/Basic/UGM/UGM.h>
+#include <3rdParty/HEMesh/HEMesh.h>
+#include <CppUtil/Basic/Ptr.h>
 #include <iostream>
 #include <string>
 
 using namespace CppUtil::Basic;
 using namespace std;
 using namespace CppUtil;
+using namespace Ubpa;
 
 class V;
 class E;
@@ -45,12 +46,12 @@ private:
 	string pre;
 };
 
-ostream & operator<< (ostream & os, HEMesh<V>::ptr<V> v) {
+ostream & operator<< (ostream & os, HEMesh<V>::ptrV v) {
 	os << v->name;
 	return os;
 }
 
-ostream & operator<< (ostream & os, HEMesh<V>::ptr<HEMesh<V>::HE> he) {
+ostream & operator<< (ostream & os, HEMesh<V>::ptrHE he) {
 	os << he->Origin() << "->" << he->End();
 	return os;
 }
@@ -91,7 +92,7 @@ int main() {
 			<< "    test basic    " << endl
 			<< "------------------" << endl;
 
-		auto mesh = HEMesh<V>::New();
+		auto mesh = make_shared<HEMesh<V>>();
 		cout << "add v0, v1, v2" << endl;
 
 		auto v0 = mesh->AddVertex("v0");
@@ -130,7 +131,7 @@ int main() {
 			<< "    test SpiltEdge    " << endl
 			<< "----------------------" << endl;
 
-		auto mesh = HEMesh<V>::New();
+		auto mesh = make_shared<HEMesh<V>>();
 
 		auto v0 = mesh->AddVertex("v0");
 		auto v1 = mesh->AddVertex("v1");
@@ -163,10 +164,10 @@ int main() {
 	{
 		cout
 			<< "-----------------------" << endl
-			<< "    test RotateEdge    " << endl
+			<< "    test FlipEdge    " << endl
 			<< "-----------------------" << endl;
 
-		auto mesh = HEMesh<V>::New();
+		auto mesh = make_shared<HEMesh<V>>();
 
 		auto v0 = mesh->AddVertex("v1");
 		auto v1 = mesh->AddVertex("v2");
@@ -190,7 +191,7 @@ int main() {
 		mesh->AddPolygon({ he02,he23,he30 }, "P1");
 
 		Print(mesh);
-		mesh->RotateEdge(e02);
+		mesh->FlipEdge(e02);
 		Print(mesh);
 	}
 	
@@ -201,7 +202,7 @@ int main() {
 			<< "    test CollapseEdge    " << endl
 			<< "-------------------------" << endl;
 
-		auto mesh = HEMesh<V>::New();
+		auto mesh = make_shared<HEMesh<V>>();
 
 		auto v0 = mesh->AddVertex("v0");
 		auto v1 = mesh->AddVertex("v1");
@@ -255,7 +256,7 @@ int main() {
 		indices.push_back({ 9, 10, 17 });
 		indices.push_back({ 1, 2, 3, 4, 16 });
 		indices.push_back({ 14, 16, 17 });
-		auto mesh = HEMesh<V>::New();
+		auto mesh = make_shared<HEMesh<V>>();
 		mesh->Init(indices);
 		for (size_t i = 0; i <= 17; i++)
 			mesh->Vertices().at(i)->name = "v" + to_string(i);
@@ -288,7 +289,7 @@ int main() {
 		indices.push_back({ 6, 8, 9 });
 		indices.push_back({ 5, 0, 6 });
 
-		auto mesh = HEMesh<V>::New();
+		auto mesh = make_shared<HEMesh<V>>();
 		mesh->Init(indices);
 		for (size_t i = 0; i <= 9; i++)
 			mesh->Vertices().at(i)->name = "v" + to_string(i);
@@ -301,13 +302,13 @@ int main() {
 	}
 
 	{
-		auto mesh0 = HEMesh<>::New();
-		auto mesh1 = HEMesh<V>::New(); // V E P
+		auto mesh0 = make_shared<HEMesh<>>();
+		auto mesh1 = make_shared<HEMesh<V>>(); // V E P
 		class tV;
 		class tE;
 		class tV : public TVertex<tV, tE> {};
 		class tE : public TEdge<tV, tE> {};
-		auto mesh2 = HEMesh<tV>::New();
+		auto mesh2 = make_shared<HEMesh<tV>>();
 	}
 
 	return 0;
