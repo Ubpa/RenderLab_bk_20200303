@@ -113,7 +113,7 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 	for (size_t i = 0; i < n; i++) {
 		{// 2. spilt edges with length > maxL
 			printf("2. spilt edges with length > maxL\n");
-			unordered_set<E::Ptr> dEs(heMesh->Edges().begin(), heMesh->Edges().end()); // dynamic edges
+			unordered_set<E*> dEs(heMesh->Edges().begin(), heMesh->Edges().end()); // dynamic edges
 			while (dEs.size() > 0) {
 				auto iter = dEs.begin();
 				auto e = *iter;
@@ -130,7 +130,7 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 
 		{// 3. collapse edges with length < minL
 			printf("3. collapse edges with length < minL\n");
-			unordered_set<E::Ptr> dEs(heMesh->Edges().begin(), heMesh->Edges().end()); // dynamic edges
+			unordered_set<E*> dEs(heMesh->Edges().begin(), heMesh->Edges().end()); // dynamic edges
 			while (dEs.size() > 0) {
 				auto iter = dEs.begin();
 				auto e = *iter;

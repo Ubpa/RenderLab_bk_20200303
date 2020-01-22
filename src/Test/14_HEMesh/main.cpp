@@ -46,12 +46,12 @@ private:
 	string pre;
 };
 
-ostream & operator<< (ostream & os, HEMesh<V>::ptrV v) {
+ostream & operator<< (ostream & os, V* v) {
 	os << v->name;
 	return os;
 }
 
-ostream & operator<< (ostream & os, HEMesh<V>::ptrHE he) {
+ostream & operator<< (ostream & os, HEMesh<V>::HE* he) {
 	os << he->Origin() << "->" << he->End();
 	return os;
 }

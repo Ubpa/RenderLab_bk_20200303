@@ -68,7 +68,7 @@ void Paramaterize::SetBoundPos() {
 	// get boundary
 	auto boundary = minSurf->heMesh->Boundaries()[0];
 	auto n = boundary.size();
-	vector<MinSurf::V::Ptr> vertices;
+	vector<MinSurf::V*> vertices;
 	for (auto he : boundary)
 		vertices.push_back(he->Origin());
 
