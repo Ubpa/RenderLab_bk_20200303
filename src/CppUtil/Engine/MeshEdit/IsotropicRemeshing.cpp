@@ -45,9 +45,9 @@ bool IsotropicRemeshing::Init(Ptr<TriMesh> triMesh) {
 		return false;
 	}
 
-	if (!heMesh->IsTriMesh() || heMesh->HaveBoundary()) {
+	if (!heMesh->IsTriMesh()) {
 		printf("ERROR::IsotropicRemeshing::Init:\n"
-			"\t""trimesh is not a triangle mesh or has boundaries\n");
+			"\t""trimesh is not a triangle mesh\n");
 		heMesh->Clear();
 		return false;
 	}
@@ -75,9 +75,9 @@ bool IsotropicRemeshing::Run(size_t n) {
 		return false;
 	}
 	
-	if (!heMesh->IsTriMesh() || heMesh->HaveBoundary()) {
+	if (!heMesh->IsTriMesh()) {
 		printf("ERROR::IsotropicRemeshing::Run\n"
-			"\t""!heMesh->IsTriMesh() || heMesh->HaveBoundary(), algorithm error\n");
+			"\t""!heMesh->IsTriMesh(), algorithm error\n");
 		return false;
 	}
 
@@ -136,6 +136,9 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 				auto e = *iter;
 				dEs.erase(iter);
 
+				if (e->HalfEdge()->Origin()->IsBoundary() || e->HalfEdge()->End()->IsBoundary())
+					continue;
+
 				if (e->Length() < minL) {
 					const auto c = e->Centroid();
 					for (auto adjV : e->AdjVertices()) {
@@ -157,68 +160,92 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 
 		// 4. filp edges which can balance degree (6)
 		printf("4. filp edges which can balance degree (6)\n");
-		const int D = 6; // balance degree
+		constexpr int innerD = 6;
+		constexpr int boundD = 4;
 		for (auto e : heMesh->Edges()) {
+			if (e->IsBoundary())
+				continue;
 			auto he01 = e->HalfEdge();
 
-			auto v0d = static_cast<int>(he01->Origin()->Degree());
-			if (v0d == 3)
+			auto v0 = he01->Origin();
+			auto v0d = static_cast<int>(v0->Degree());
+			if (v0d <= 3)
 				continue;
-			auto v1d = static_cast<int>(he01->End()->Degree());
-			if (v1d == 3)
+			auto v1 = he01->End();
+			auto v1d = static_cast<int>(v1->Degree());
+			if (v1d <= 3)
 				continue;
-			auto v2d = static_cast<int>(he01->Next()->End()->Degree());
-			auto v3d = static_cast<int>(he01->Pair()->Next()->End()->Degree());
+			auto v2 = he01->Next()->End();
+			auto v2d = static_cast<int>(v2->Degree());
+			auto v3 = he01->Pair()->Next()->End();
+			auto v3d = static_cast<int>(v3->Degree());
 
-			auto cost = pow(v0d - D, 2) + pow(v1d - D, 2) + pow(v2d - D, 2) + pow(v3d - D, 2);
-			auto flipCost = pow(v0d - 1 - D, 2) + pow(v1d - 1 - D, 2) + pow(v2d + 1 - D, 2) + pow(v3d + 1 - D, 2);
-			if (flipCost < cost)
+			double v0Cost = pow(v0d - (v0->IsBoundary() ? 4 : 6), 2);
+			double v1Cost = pow(v1d - (v1->IsBoundary() ? 4 : 6), 2);
+			double v2Cost = pow(v2d - (v2->IsBoundary() ? 4 : 6), 2);
+			double v3Cost = pow(v3d - (v3->IsBoundary() ? 4 : 6), 2);
+			double flipedV0Cost = pow(v0d - 1 - (v0->IsBoundary() ? 4 : 6), 2);
+			double flipedV1Cost = pow(v1d - 1 - (v1->IsBoundary() ? 4 : 6), 2);
+			double flipedV2Cost = pow(v2d + 1 - (v2->IsBoundary() ? 4 : 6), 2);
+			double flipedV3Cost = pow(v3d + 1 - (v3->IsBoundary() ? 4 : 6), 2);
+
+			double cost = v0Cost + v1Cost + v2Cost + v3Cost;
+			double flipedCost = flipedV0Cost + flipedV1Cost + flipedV2Cost + flipedV3Cost;
+			if (flipedCost < cost)
 				heMesh->FlipEdge(e);
 		}
 
 		// 5. vertex normal
 		printf("5. vertex normal\n");
-		vector<tuple<Vec3, float>> sWNAs(heMesh->NumVertices(), {Vec3(0.f), 0.f}); // sum Weighted Normal, sum Area
-		for (auto triangle : heMesh->Export()) {
-			auto v0 = triangle[0];
-			auto v1 = triangle[1];
-			auto v2 = triangle[2];
+		unordered_map<V*, Vec3> sWNs; // sum Weighted Normal
+		unordered_map<HEMesh<V>::P*, float> triAreas; // triangle areas
+		for (auto triangle : heMesh->Polygons()) {
+			auto vertices = triangle->BoundaryVertice();
+			assert(vertices.size() == 3);
 
-			auto pos0 = heMesh->Vertices().at(v0)->pos;
-			auto pos1 = heMesh->Vertices().at(v1)->pos;
-			auto pos2 = heMesh->Vertices().at(v2)->pos;
+			auto v0 = vertices[0];
+			auto v1 = vertices[1];
+			auto v2 = vertices[2];
+
+			auto pos0 = v0->pos;
+			auto pos1 = v1->pos;
+			auto pos2 = v2->pos;
 
 			auto d10 = pos0 - pos1;
 			auto d12 = pos2 - pos1;
 			auto wN = d12.Cross(d10);
-			float area = wN.Norm();
 
-			get<0>(sWNAs[v0]) += wN;
-			get<0>(sWNAs[v1]) += wN;
-			get<0>(sWNAs[v2]) += wN;
-			get<1>(sWNAs[v0]) += area;
-			get<1>(sWNAs[v1]) += area;
-			get<1>(sWNAs[v2]) += area;
+			sWNs[v0] += wN;
+			sWNs[v1] += wN;
+			sWNs[v2] += wN;
+			triAreas[triangle] = wN.Norm();
 		}
 
 		// 6. tangential smoothing
 		printf("6. tangential smoothing\n");
 		constexpr float w = 0.2f;// avoid oscillation
 		for (auto v : heMesh->Vertices()) {
+			if (v->IsBoundary()) {
+				v->newPos = v->pos;
+				continue;
+			}
+
 			// gravity-weighted offset
 			Vec3 gravityCentroid;
 			float sumArea = 0.f;
-			auto adjVs = v->AdjVertices();
-			for (auto adjV : adjVs) {
-				float area = get<1>(sWNAs[heMesh->Index(adjV)]);
+			for (auto outHE : v->OutHEs()) {
+				auto p0 = outHE->Polygon();
+				auto p1 = outHE->Pair()->Polygon();
+				float area = 0.5f * (triAreas[p0] + triAreas[p1]);
+				
 				sumArea += area;
-				gravityCentroid += area * adjV->pos;
+				gravityCentroid += area * outHE->End()->pos;
 			}
 			gravityCentroid /= sumArea;
 			Vec3 offset = gravityCentroid - v->pos;
 
 			// normal
-			Vec3 normal = get<0>(sWNAs[heMesh->Index(v)]).Normalize();
+			Vec3 normal = sWNs[v].Normalize();
 
 			// tangent offset
 			Vec3 tangentOffset = offset - offset.Dot(normal) * normal;

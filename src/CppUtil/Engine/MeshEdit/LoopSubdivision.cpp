@@ -7,7 +7,7 @@
 #include <omp.h>
 
 #ifdef NDEBUG
-#define THREAD_NUM omp_get_num_procs() - 1
+#define THREAD_NUM static_cast<size_t>(omp_get_num_procs()) - 1
 #else
 #define THREAD_NUM 1
 //#define THREAD_NUM omp_get_num_procs() - 1
@@ -20,7 +20,9 @@ using namespace std;
 using namespace Ubpa;
 
 LoopSubdivision::LoopSubdivision(Basic::Ptr<TriMesh> triMesh)
-	: heMesh(make_shared<HEMesh<V>>()) { Init(triMesh); }
+	: heMesh(make_shared<HEMesh<V>>()) {
+	Init(triMesh);
+}
 
 void LoopSubdivision::Clear() {
 	triMesh = nullptr;
@@ -56,9 +58,9 @@ bool LoopSubdivision::Init(Basic::Ptr<TriMesh> triMesh) {
 		v->pos = triMesh->GetPositions()[i];
 	}
 
-	if (!heMesh->IsTriMesh() || heMesh->HaveBoundary()) {
+	if (!heMesh->IsTriMesh()) {
 		printf("ERROR::LoopSubdivision::Init:\n"
-			"\t""trimesh is not a triangle mesh or has boundaries\n");
+			"\t""!heMesh->IsTriMesh()\n");
 		heMesh->Clear();
 		return false;
 	}
@@ -67,7 +69,7 @@ bool LoopSubdivision::Init(Basic::Ptr<TriMesh> triMesh) {
 	return true;
 }
 
-bool LoopSubdivision::Run(size_t n){
+bool LoopSubdivision::Run(size_t n) {
 	if (heMesh->IsEmpty() || !triMesh) {
 		printf("ERROR::LoopSubdivision::Run\n"
 			"\t""heMesh->IsEmpty() || !triMesh\n");
@@ -77,9 +79,9 @@ bool LoopSubdivision::Run(size_t n){
 	for (size_t i = 0; i < n; i++)
 		Kernel();
 
-	if (!heMesh->IsTriMesh() || heMesh->HaveBoundary()) {
+	if (!heMesh->IsTriMesh()) {
 		printf("ERROR::LoopSubdivision::Run\n"
-			"\t""!heMesh->IsTriMesh() || heMesh->HaveBoundary(), algorithm error\n");
+			"\t""!heMesh->IsTriMesh(), algorithm error\n");
 		return false;
 	}
 
@@ -95,7 +97,7 @@ bool LoopSubdivision::Run(size_t n){
 		for (auto idx : triangle)
 			indice.push_back(static_cast<uint>(idx));
 	}
-	
+
 	triMesh->Init(indice, positions);
 
 	return true;
@@ -104,17 +106,27 @@ bool LoopSubdivision::Run(size_t n){
 void LoopSubdivision::Kernel() {
 	// 1. update vertex pos
 	{
-		auto & vertices = heMesh->Vertices();
+		auto& vertices = heMesh->Vertices();
 		auto work = [&vertices](size_t id) {
 			for (size_t i = id; i < vertices.size(); i += THREAD_NUM) {
 				auto v = vertices[i];
 				auto adjVs = v->AdjVertices();
-				size_t n = adjVs.size();
-				float u = n == 3 ? 3.f / 16.f : 3.f / (8.f*n);
-				Vec3 sumPos;
-				for (auto adjV : adjVs)
-					sumPos += adjV->pos;
-				v->newPos = (1.f - n * u)*v->pos + u * sumPos;
+				if (v->IsBoundary()) {
+					Vec3 sumPos;
+					for (auto adjV : adjVs) {
+						if(adjV->IsBoundary())
+							sumPos += adjV->pos;
+					}
+					v->newPos = 3.f / 4.f * v->pos + 1.f / 8.f * sumPos;
+				}
+				else {
+					size_t n = adjVs.size();
+					float u = n == 3 ? 3.f / 16.f : 3.f / (8.f * n);
+					Vec3 sumPos;
+					for (auto adjV : adjVs)
+						sumPos += adjV->pos;
+					v->newPos = (1.f - n * u) * v->pos + u * sumPos;
+				}
 				v->isNew = false;
 			}
 		};
@@ -124,22 +136,26 @@ void LoopSubdivision::Kernel() {
 			workers.push_back(thread(work, i));
 
 		// wait workers
-		for (auto & worker : workers)
+		for (auto& worker : workers)
 			worker.join();
 	}
 
 	// 2. compute pos of new vertice on edges
 	{
-		auto & edges = heMesh->Edges();
+		auto& edges = heMesh->Edges();
 		auto work = [&edges](size_t id) {
 			for (size_t i = id; i < edges.size(); i += THREAD_NUM) {
 				auto e = edges[i];
 				auto pos0 = e->HalfEdge()->Origin()->pos;
 				auto pos1 = e->HalfEdge()->Pair()->Origin()->pos;
-				auto pos2 = e->HalfEdge()->Next()->End()->pos;
-				auto pos3 = e->HalfEdge()->Pair()->Next()->End()->pos;
+				if (!e->IsBoundary()) {
+					auto pos2 = e->HalfEdge()->Next()->End()->pos;
+					auto pos3 = e->HalfEdge()->Pair()->Next()->End()->pos;
 
-				e->newPos = (3.f*(pos0 + pos1) + pos2 + pos3) / 8.f;
+					e->newPos = (3.f * (pos0 + pos1) + pos2 + pos3) / 8.f;
+				}
+				else
+					e->newPos = (pos0 + pos1) / 2.f;
 			}
 		};
 
@@ -148,7 +164,7 @@ void LoopSubdivision::Kernel() {
 			workers.push_back(thread(work, i));
 
 		// wait workers
-		for (auto & worker : workers)
+		for (auto& worker : workers)
 			worker.join();
 	}
 
@@ -159,7 +175,7 @@ void LoopSubdivision::Kernel() {
 	for (auto e : edges) {
 		auto v0 = e->HalfEdge()->Origin();
 		auto v1 = e->HalfEdge()->End();
-		
+
 		auto newPos = e->newPos;
 		auto v = heMesh->SpiltEdge(e); // e is deleted in HEMesh
 		v->isNew = true;
@@ -173,7 +189,7 @@ void LoopSubdivision::Kernel() {
 
 	// 4. flip new edge with old and new vertex
 	for (auto e : newEdges) {
-		if (e->HalfEdge()->Origin()->isNew + e->HalfEdge()->Pair()->Origin()->isNew != 1 )
+		if (e->HalfEdge()->Origin()->isNew + e->HalfEdge()->Pair()->Origin()->isNew != 1)
 			continue;
 
 		heMesh->FlipEdge(e);
@@ -184,7 +200,7 @@ void LoopSubdivision::Kernel() {
 		for (auto v : heMesh->Vertices())
 			v->pos = v->newPos;
 
-		auto & vertices = heMesh->Vertices();
+		auto& vertices = heMesh->Vertices();
 		auto work = [&vertices](size_t id) {
 			for (size_t i = id; i < vertices.size(); i += THREAD_NUM) {
 				auto v = vertices[i];
@@ -197,7 +213,7 @@ void LoopSubdivision::Kernel() {
 			workers.push_back(thread(work, i));
 
 		// wait workers
-		for (auto & worker : workers)
+		for (auto& worker : workers)
 			worker.join();
 	}
 }
