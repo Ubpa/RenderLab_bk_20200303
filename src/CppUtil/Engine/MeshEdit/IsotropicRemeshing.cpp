@@ -102,6 +102,9 @@ bool IsotropicRemeshing::Run(size_t n) {
 }
 
 bool IsotropicRemeshing::Kernel(size_t n) {
+	if (heMesh->NumPolygons() == 2)
+		return true; // dihedron
+
 	// 1. mean of edges length
 	printf("1. mean of edges length\n");
 	auto step1 = [](E* e) {return e->Length(); };
@@ -147,6 +150,8 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 							continue;
 					}
 					auto eAdjEs = e->AdjEdges();
+					if (eAdjEs.size() <= 2)
+						continue;
 
 					auto v = heMesh->CollapseEdge(e, c);
 					if (v != nullptr) {
@@ -204,10 +209,8 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 
 				int sumCost = 0;
 				int sumFlipedCost = 0;
-				constexpr int boundD = 4;
-				constexpr int innerD = 6;
 				for (size_t i = 0; i < 4; i++) {
-					int diff = degrees[i] - (vertices[i]->IsBoundary() ? boundD : innerD);
+					int diff = degrees[i] - (vertices[i]->IsBoundary() ? 4 : 6);
 					int flipedDiff = diff + (i < 2 ? -1 : 1);
 					sumCost += diff * diff;
 					sumFlipedCost += flipedDiff * flipedDiff;
@@ -221,6 +224,9 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 				vertexMutexes[idx].unlock();
 		};
 		Parallel::Instance().Run(step4, heMesh->Edges());
+
+		if (heMesh->NumPolygons() == 2)
+			break; // dihedron
 
 		// 5. vertex normal
 		printf("5. vertex normal\n");
