@@ -76,7 +76,7 @@ bool IsotropicRemeshing::Run(size_t n) {
 			"\t""run Kernel fail\n");
 		return false;
 	}
-	
+
 	if (!heMesh->IsTriMesh()) {
 		printf("ERROR::IsotropicRemeshing::Run\n"
 			"\t""!heMesh->IsTriMesh(), algorithm error\n");
@@ -159,81 +159,96 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 			}
 		}
 
-		// 4. filp edges which can balance degree (6)
-		printf("4. filp edges which can balance degree (6)\n");
-		constexpr int innerD = 6;
-		constexpr int boundD = 4;
-		for (auto e : heMesh->Edges()) {
+		// 4. filp edges which can balance degree
+		printf("4. filp edges which can balance degree\n");
+		vector<mutex> vertexMutexes(heMesh->NumVertices());
+		auto step4 = [&](E* e) {
 			if (e->IsBoundary())
-				continue;
+				return;
 			auto he01 = e->HalfEdge();
+			auto he10 = he01->Pair();
 
-			auto v0 = he01->Origin();
-			auto v0d = static_cast<int>(v0->Degree());
-			if (v0d <= 3)
-				continue;
-			auto v1 = he01->End();
-			auto v1d = static_cast<int>(v1->Degree());
-			if (v1d <= 3)
-				continue;
-			auto v2 = he01->Next()->End();
-			auto v2d = static_cast<int>(v2->Degree());
-			auto v3 = he01->Pair()->Next()->End();
-			auto v3d = static_cast<int>(v3->Degree());
+			// lock 4 vertices
+			set<size_t> sortedIndices; // avoid deadlock
+			array<V*, 4> vertices = { he01->Origin(), he10->Origin(), nullptr, nullptr };
+			array<size_t, 4> indices = { heMesh->Index(vertices[0]) ,heMesh->Index(vertices[1]) };
+			do
+			{
+				for (auto idx : sortedIndices)
+					vertexMutexes[idx].unlock();
 
-			double v0Cost = pow(v0d - (v0->IsBoundary() ? boundD : innerD), 2);
-			double v1Cost = pow(v1d - (v1->IsBoundary() ? boundD : innerD), 2);
-			double v2Cost = pow(v2d - (v2->IsBoundary() ? boundD : innerD), 2);
-			double v3Cost = pow(v3d - (v3->IsBoundary() ? boundD : innerD), 2);
-			double flipedV0Cost = pow(v0d - 1 - (v0->IsBoundary() ? boundD : innerD), 2);
-			double flipedV1Cost = pow(v1d - 1 - (v1->IsBoundary() ? boundD : innerD), 2);
-			double flipedV2Cost = pow(v2d + 1 - (v2->IsBoundary() ? boundD : innerD), 2);
-			double flipedV3Cost = pow(v3d + 1 - (v3->IsBoundary() ? boundD : innerD), 2);
+				sortedIndices.clear();
+				vertices[2] = he01->Next()->End();
+				vertices[3] = he10->Next()->End();
+				indices[2] = heMesh->Index(vertices[2]);
+				indices[3] = heMesh->Index(vertices[3]);
+				for (auto idx : indices)
+					sortedIndices.insert(idx);
 
-			double cost = v0Cost + v1Cost + v2Cost + v3Cost;
-			double flipedCost = flipedV0Cost + flipedV1Cost + flipedV2Cost + flipedV3Cost;
-			if (flipedCost < cost)
-				heMesh->FlipEdge(e);
-		}
+				for (auto idx : sortedIndices)
+					vertexMutexes[idx].lock();
+			} while (vertices[2] != he01->Next()->End() || vertices[3] != he10->Next()->End());
+
+			// kernel
+			do // do ... while(false) trick;
+			{
+				array<int, 4> degrees;
+				degrees[0] = static_cast<int>(vertices[0]->Degree());
+				if (degrees[0] <= 3)
+					break;
+				degrees[1] = static_cast<int>(vertices[1]->Degree());
+				if (degrees[1] <= 3)
+					break;
+				degrees[2] = static_cast<int>(vertices[2]->Degree());
+				degrees[3] = static_cast<int>(vertices[3]->Degree());
+
+				int sumCost = 0;
+				int sumFlipedCost = 0;
+				constexpr int boundD = 4;
+				constexpr int innerD = 6;
+				for (size_t i = 0; i < 4; i++) {
+					int diff = degrees[i] - (vertices[i]->IsBoundary() ? boundD : innerD);
+					int flipedDiff = diff + (i < 2 ? -1 : 1);
+					sumCost += diff * diff;
+					sumFlipedCost += flipedDiff * flipedDiff;
+				}
+
+				if (sumFlipedCost < sumCost)
+					heMesh->FlipEdge(e);
+			} while (false);
+
+			for (auto idx : sortedIndices)
+				vertexMutexes[idx].unlock();
+		};
+		Parallel::Instance().Run(step4, heMesh->Edges());
 
 		// 5. vertex normal
 		printf("5. vertex normal\n");
-		vector<tuple<Vec3, mutex>> sWNs(heMesh->NumVertices()); // sum Weighted Normal
+		vector<Vec3> triWNs(heMesh->NumPolygons(), Vec3(0.f)); // triangle weighted normals
 		vector<float> triAreas(heMesh->NumPolygons(), 0.f); // triangle areas
-		auto step5 = [&](HEMesh<V>::P* triangle) {
+		vector<Vec3> sWNs(heMesh->NumVertices()); // sum Weighted Normal
+		auto step5_tri = [&](HEMesh<V>::P* triangle) {
 			auto vertices = triangle->BoundaryVertice();
 			assert(vertices.size() == 3);
 
-			auto v0 = vertices[0];
-			auto v1 = vertices[1];
-			auto v2 = vertices[2];
-			auto v0Idx = heMesh->Index(v0);
-			auto v1Idx = heMesh->Index(v1);
-			auto v2Idx = heMesh->Index(v2);
-
-			auto pos0 = v0->pos;
-			auto pos1 = v1->pos;
-			auto pos2 = v2->pos;
-
-			auto d10 = pos0 - pos1;
-			auto d12 = pos2 - pos1;
+			auto d10 = vertices[0]->pos - vertices[1]->pos;
+			auto d12 = vertices[2]->pos - vertices[1]->pos;
 			auto wN = d12.Cross(d10);
 
-			get<1>(sWNs[v0Idx]).lock();
-			get<0>(sWNs[v0Idx]) += wN;
-			get<1>(sWNs[v0Idx]).unlock();
-
-			get<1>(sWNs[v1Idx]).lock();
-			get<0>(sWNs[v1Idx]) += wN;
-			get<1>(sWNs[v1Idx]).unlock();
-
-			get<1>(sWNs[v2Idx]).lock();
-			get<0>(sWNs[v2Idx]) += wN;
-			get<1>(sWNs[v2Idx]).unlock();
-
-			triAreas[heMesh->Index(triangle)] = wN.Norm();
+			size_t idx = heMesh->Index(triangle);
+			triWNs[idx] = wN;
+			triAreas[idx] = wN.Norm();
 		};
-		Parallel::Instance().Run(step5, heMesh->Polygons());
+		auto step5_v = [&](V* v) {
+			size_t idx = heMesh->Index(v);
+			for (auto adjP : v->AdjPolygons()) {
+				if (HEMesh<V>::P::IsBoundary(adjP))
+					continue;
+				sWNs[idx] += triWNs[heMesh->Index(adjP)];
+			}
+		};
+		Parallel::Instance().Run(step5_tri, heMesh->Polygons());
+		Parallel::Instance().Run(step5_v, heMesh->Vertices());
 
 		// 6. tangential smoothing
 		printf("6. tangential smoothing\n");
@@ -259,7 +274,7 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 			Vec3 offset = gravityCentroid - v->pos;
 
 			// normal
-			Vec3 normal = get<0>(sWNs[heMesh->Index(v)]).Normalize();
+			Vec3 normal = sWNs[heMesh->Index(v)].Normalize();
 
 			// tangent offset
 			Vec3 tangentOffset = offset - offset.Dot(normal) * normal;

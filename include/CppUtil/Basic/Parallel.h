@@ -59,6 +59,7 @@ namespace Ubpa {
 	template<typename Func, typename Data>
 	void Parallel::Run(const Func& func, const std::vector<Data>& datas) {
 		std::vector<std::function<void()>> works;
+		works.reserve(datas.size());
 		for (auto& data : datas)
 			works.emplace_back([&]() { func(data); });
 		Run(works);
@@ -100,6 +101,7 @@ namespace Ubpa {
 	typename CppUtil::Basic::FunctionTraitsLambda<Func>::result_type Parallel::RunSum(const Func& func, const std::vector<Data>& datas) {
 		using RstType = typename CppUtil::Basic::FunctionTraitsLambda<Func>::result_type;
 		std::vector<std::function<RstType()>> works;
+		works.reserve(datas.size());
 		for (auto& data : datas)
 			works.emplace_back([&]() { return func(data); });
 		return RunSum(works);

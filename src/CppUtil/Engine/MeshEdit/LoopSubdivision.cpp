@@ -67,6 +67,7 @@ bool LoopSubdivision::Run(size_t n) {
 		return false;
 	}
 
+	heMesh->Reserve(static_cast<size_t>(pow(4, n)) * heMesh->NumVertices());
 	for (size_t i = 0; i < n; i++)
 		Kernel();
 
