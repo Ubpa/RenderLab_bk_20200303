@@ -1,6 +1,8 @@
 #ifndef _CPPUTIL_BASIC_HEADER_FUNCTION_TRAITS_H_
 #define _CPPUTIL_BASIC_HEADER_FUNCTION_TRAITS_H_
 
+#include <tuple>
+
 // src
 // https://stackoverflow.com/questions/7943525/is-it-possible-to-figure-out-the-parameter-type-and-return-type-of-a-lambda
 // kennytm

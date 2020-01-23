@@ -2,11 +2,13 @@
 
 #include <CppUtil/Engine/TriMesh.h>
 #include <CppUtil/Basic/Math.h>
+#include <CppUtil/Basic/Parallel.h>
 
 #include <unordered_set>
 #include <set>
 #include <array>
 #include <tuple>
+#include <mutex>
 
 using namespace CppUtil;
 using namespace CppUtil::Basic;
@@ -102,16 +104,14 @@ bool IsotropicRemeshing::Run(size_t n) {
 bool IsotropicRemeshing::Kernel(size_t n) {
 	// 1. mean of edges length
 	printf("1. mean of edges length\n");
-	float L = 0.f;
-	for (auto e : heMesh->Edges())
-		L += e->Length();
-
-	L /= heMesh->NumEdges();
+	auto step1 = [](E* e) {return e->Length(); };
+	float L = Parallel::Instance().RunSum(step1, heMesh->Edges()) / heMesh->NumEdges();
 	float minL = 0.8f * L;
 	float maxL = 4.f / 3.f * L;
 
 	for (size_t i = 0; i < n; i++) {
-		{// 2. spilt edges with length > maxL
+		// 2. spilt edges with length > maxL
+		{
 			printf("2. spilt edges with length > maxL\n");
 			unordered_set<E*> dEs(heMesh->Edges().begin(), heMesh->Edges().end()); // dynamic edges
 			while (dEs.size() > 0) {
@@ -128,7 +128,8 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 			}
 		}
 
-		{// 3. collapse edges with length < minL
+		// 3. collapse edges with length < minL
+		{
 			printf("3. collapse edges with length < minL\n");
 			unordered_set<E*> dEs(heMesh->Edges().begin(), heMesh->Edges().end()); // dynamic edges
 			while (dEs.size() > 0) {
@@ -180,14 +181,14 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 			auto v3 = he01->Pair()->Next()->End();
 			auto v3d = static_cast<int>(v3->Degree());
 
-			double v0Cost = pow(v0d - (v0->IsBoundary() ? 4 : 6), 2);
-			double v1Cost = pow(v1d - (v1->IsBoundary() ? 4 : 6), 2);
-			double v2Cost = pow(v2d - (v2->IsBoundary() ? 4 : 6), 2);
-			double v3Cost = pow(v3d - (v3->IsBoundary() ? 4 : 6), 2);
-			double flipedV0Cost = pow(v0d - 1 - (v0->IsBoundary() ? 4 : 6), 2);
-			double flipedV1Cost = pow(v1d - 1 - (v1->IsBoundary() ? 4 : 6), 2);
-			double flipedV2Cost = pow(v2d + 1 - (v2->IsBoundary() ? 4 : 6), 2);
-			double flipedV3Cost = pow(v3d + 1 - (v3->IsBoundary() ? 4 : 6), 2);
+			double v0Cost = pow(v0d - (v0->IsBoundary() ? boundD : innerD), 2);
+			double v1Cost = pow(v1d - (v1->IsBoundary() ? boundD : innerD), 2);
+			double v2Cost = pow(v2d - (v2->IsBoundary() ? boundD : innerD), 2);
+			double v3Cost = pow(v3d - (v3->IsBoundary() ? boundD : innerD), 2);
+			double flipedV0Cost = pow(v0d - 1 - (v0->IsBoundary() ? boundD : innerD), 2);
+			double flipedV1Cost = pow(v1d - 1 - (v1->IsBoundary() ? boundD : innerD), 2);
+			double flipedV2Cost = pow(v2d + 1 - (v2->IsBoundary() ? boundD : innerD), 2);
+			double flipedV3Cost = pow(v3d + 1 - (v3->IsBoundary() ? boundD : innerD), 2);
 
 			double cost = v0Cost + v1Cost + v2Cost + v3Cost;
 			double flipedCost = flipedV0Cost + flipedV1Cost + flipedV2Cost + flipedV3Cost;
@@ -197,15 +198,18 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 
 		// 5. vertex normal
 		printf("5. vertex normal\n");
-		unordered_map<V*, Vec3> sWNs; // sum Weighted Normal
-		unordered_map<HEMesh<V>::P*, float> triAreas; // triangle areas
-		for (auto triangle : heMesh->Polygons()) {
+		vector<tuple<Vec3, mutex>> sWNs(heMesh->NumVertices()); // sum Weighted Normal
+		vector<float> triAreas(heMesh->NumPolygons(), 0.f); // triangle areas
+		auto step5 = [&](HEMesh<V>::P* triangle) {
 			auto vertices = triangle->BoundaryVertice();
 			assert(vertices.size() == 3);
 
 			auto v0 = vertices[0];
 			auto v1 = vertices[1];
 			auto v2 = vertices[2];
+			auto v0Idx = heMesh->Index(v0);
+			auto v1Idx = heMesh->Index(v1);
+			auto v2Idx = heMesh->Index(v2);
 
 			auto pos0 = v0->pos;
 			auto pos1 = v1->pos;
@@ -215,19 +219,29 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 			auto d12 = pos2 - pos1;
 			auto wN = d12.Cross(d10);
 
-			sWNs[v0] += wN;
-			sWNs[v1] += wN;
-			sWNs[v2] += wN;
-			triAreas[triangle] = wN.Norm();
-		}
+			get<1>(sWNs[v0Idx]).lock();
+			get<0>(sWNs[v0Idx]) += wN;
+			get<1>(sWNs[v0Idx]).unlock();
+
+			get<1>(sWNs[v1Idx]).lock();
+			get<0>(sWNs[v1Idx]) += wN;
+			get<1>(sWNs[v1Idx]).unlock();
+
+			get<1>(sWNs[v2Idx]).lock();
+			get<0>(sWNs[v2Idx]) += wN;
+			get<1>(sWNs[v2Idx]).unlock();
+
+			triAreas[heMesh->Index(triangle)] = wN.Norm();
+		};
+		Parallel::Instance().Run(step5, heMesh->Polygons());
 
 		// 6. tangential smoothing
 		printf("6. tangential smoothing\n");
 		constexpr float w = 0.2f;// avoid oscillation
-		for (auto v : heMesh->Vertices()) {
+		auto step6 = [&](V* v) {
 			if (v->IsBoundary()) {
 				v->newPos = v->pos;
-				continue;
+				return;
 			}
 
 			// gravity-weighted offset
@@ -236,8 +250,8 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 			for (auto outHE : v->OutHEs()) {
 				auto p0 = outHE->Polygon();
 				auto p1 = outHE->Pair()->Polygon();
-				float area = 0.5f * (triAreas[p0] + triAreas[p1]);
-				
+				float area = 0.5f * (triAreas[heMesh->Index(p0)] + triAreas[heMesh->Index(p1)]);
+
 				sumArea += area;
 				gravityCentroid += area * outHE->End()->pos;
 			}
@@ -245,7 +259,7 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 			Vec3 offset = gravityCentroid - v->pos;
 
 			// normal
-			Vec3 normal = sWNs[v].Normalize();
+			Vec3 normal = get<0>(sWNs[heMesh->Index(v)]).Normalize();
 
 			// tangent offset
 			Vec3 tangentOffset = offset - offset.Dot(normal) * normal;
@@ -253,14 +267,13 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 
 			// project back
 			v->newPos = v->Project(newPos, normal);
-		}
+		};
+		Parallel::Instance().Run(step6, heMesh->Vertices());
 
 		// 7. update pos
 		printf("7. update pos\n");
-		for (auto v : heMesh->Vertices()) {
-			if(!v->newPos.HasNaN())
-				v->pos = v->newPos;
-		}
+		auto step7 = [](V* v) { assert(!v->newPos.HasNaN()); v->pos = v->newPos; };
+		Parallel::Instance().Run(step7, heMesh->Vertices());
 	}
 
 	return true;
