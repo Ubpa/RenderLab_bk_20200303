@@ -23,6 +23,8 @@ namespace Ubpa {
 		template<typename Func, typename Data>
 		void Run(const Func & func, const std::vector<Data>& datas);
 		template<typename Func>
+		void Run(const Func& func, size_t n);
+		template<typename Func>
 		typename CppUtil::Basic::FunctionTraitsLambda<Func>::result_type RunSum(const std::vector<Func>& works);
 		template<typename Func, typename Data>
 		typename CppUtil::Basic::FunctionTraitsLambda<Func>::result_type RunSum(const Func& func, const std::vector<Data>& datas);
@@ -63,6 +65,14 @@ namespace Ubpa {
 		for (auto& data : datas)
 			works.emplace_back([&]() { func(data); });
 		Run(works);
+	}
+
+	template<typename Func>
+	void Parallel::Run(const Func& func, size_t n) {
+		std::vector<size_t> indices(n);
+		for (size_t i = 0; i < n; i++)
+			indices[i] = i;
+		Run(func, indices);
 	}
 
 	template<typename Func>

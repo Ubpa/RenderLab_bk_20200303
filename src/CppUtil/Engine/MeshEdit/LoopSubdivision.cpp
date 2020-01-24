@@ -97,6 +97,7 @@ bool LoopSubdivision::Run(size_t n) {
 
 void LoopSubdivision::Kernel() {
 	// 1. update vertex pos
+	printf("1. update vertex pos\n");
 	auto step1 = [](V* v) {
 		auto adjVs = v->AdjVertices();
 		if (v->IsBoundary()) {
@@ -120,6 +121,7 @@ void LoopSubdivision::Kernel() {
 	Parallel::Instance().Run(step1, heMesh->Vertices());
 
 	// 2. compute pos of new vertice on edges
+	printf("2. compute pos of new vertice on edges\n");
 	auto setp2 = [](E* e) {
 		auto pos0 = e->HalfEdge()->Origin()->pos;
 		auto pos1 = e->HalfEdge()->Pair()->Origin()->pos;
@@ -135,6 +137,7 @@ void LoopSubdivision::Kernel() {
 	Parallel::Instance().Run(setp2, heMesh->Edges());
 
 	// 3. spilt edges
+	printf("3. spilt edges\n");
 	auto edges = heMesh->Edges(); // must copy
 	vector<E*> newEdges;
 	newEdges.reserve(2 * edges.size());
@@ -154,6 +157,7 @@ void LoopSubdivision::Kernel() {
 	}
 
 	// 4. flip new edge with old and new vertex
+	printf("4. flip new edge with old and new vertex\n");
 	for (auto e : newEdges) {
 		if (e->HalfEdge()->Origin()->isNew + e->HalfEdge()->Pair()->Origin()->isNew != 1)
 			continue;
@@ -162,6 +166,7 @@ void LoopSubdivision::Kernel() {
 	}
 
 	// 5. update vertex pos
+	printf("5. update vertex pos\n");
 	auto step5 = [](V* v) { v->pos = v->newPos; };
 	Parallel::Instance().Run(step5, heMesh->Vertices());
 }

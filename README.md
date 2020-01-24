@@ -193,6 +193,7 @@ Optix: 6.0
 - [x] 参数化
 - [x] 空间场平滑插值 RBF
 - [ ] 释放 OpenGL 资源
+- [ ] TriMesh 性能优化
 
 ### Unimportant
 
