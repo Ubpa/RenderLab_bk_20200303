@@ -43,6 +43,7 @@ namespace CppUtil {
 			public:
 				float Length() const { return (HalfEdge()->Origin()->pos - HalfEdge()->End()->pos).Norm(); }
 				Vec3 Centroid() const { return (HalfEdge()->Origin()->pos + HalfEdge()->End()->pos) / 2.f; }
+				bool IsCanCollapse(float min, float maxL) const;
 			};
 		private:
 			Basic::Ptr<TriMesh> triMesh;

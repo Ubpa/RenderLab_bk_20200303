@@ -3,6 +3,7 @@
 #include <CppUtil/Engine/TriMesh.h>
 #include <CppUtil/Basic/Math.h>
 #include <CppUtil/Basic/Parallel.h>
+#include <CppUtil/Basic/Geometry.h>
 
 #include <unordered_set>
 #include <set>
@@ -140,26 +141,19 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 				auto e = *iter;
 				dEs.erase(iter);
 
-				if (e->HalfEdge()->Origin()->IsBoundary() || e->HalfEdge()->End()->IsBoundary())
+				if (!e->IsCanCollapse(minL, maxL))
 					continue;
 
-				if (e->Length() < minL) {
-					const auto c = e->Centroid();
-					for (auto adjV : e->AdjVertices()) {
-						if (Point3::Distance(adjV->pos, c) > maxL)
-							continue;
-					}
-					auto eAdjEs = e->AdjEdges();
-					if (eAdjEs.size() <= 2)
-						continue;
+				auto eAdjEs = e->AdjEdges();
+				if (eAdjEs.size() <= 2)
+					continue; // dihedron
 
-					auto v = heMesh->CollapseEdge(e, c);
-					if (v != nullptr) {
-						for (auto eAdjE : eAdjEs)
-							dEs.erase(eAdjE);
-						for (auto adjE : v->AdjEdges())
-							dEs.insert(adjE);
-					}
+				auto v = heMesh->CollapseEdge(e, e->Centroid());
+				if (v != nullptr) {
+					for (auto eAdjE : eAdjEs)
+						dEs.erase(eAdjE);
+					for (auto adjE : v->AdjEdges())
+						dEs.insert(adjE);
 				}
 			}
 		}
@@ -175,24 +169,24 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 
 			// lock 4 vertices
 			set<size_t> sortedIndices; // avoid deadlock
-			array<V*, 4> vertices = { he01->Origin(), he10->Origin(), nullptr, nullptr };
-			array<size_t, 4> indices = { heMesh->Index(vertices[0]) ,heMesh->Index(vertices[1]) };
+			array<V*, 4> vertices = { he01->Origin(), nullptr, he10->Origin(), nullptr };
+			array<size_t, 4> indices = { heMesh->Index(vertices[0]), static_cast<size_t>(-1), heMesh->Index(vertices[2]), static_cast<size_t>(-1) };
 			do
 			{
 				for (auto idx : sortedIndices)
 					vertexMutexes[idx].unlock();
 
 				sortedIndices.clear();
-				vertices[2] = he01->Next()->End();
-				vertices[3] = he10->Next()->End();
-				indices[2] = heMesh->Index(vertices[2]);
+				vertices[1] = he10->Next()->End();
+				vertices[3] = he01->Next()->End();
+				indices[1] = heMesh->Index(vertices[1]);
 				indices[3] = heMesh->Index(vertices[3]);
 				for (auto idx : indices)
 					sortedIndices.insert(idx);
 
 				for (auto idx : sortedIndices)
 					vertexMutexes[idx].lock();
-			} while (vertices[2] != he01->Next()->End() || vertices[3] != he10->Next()->End());
+			} while (vertices[1] != he10->Next()->End() || vertices[3] != he01->Next()->End());
 
 			// kernel
 			do // do ... while(false) trick;
@@ -201,10 +195,10 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 				degrees[0] = static_cast<int>(vertices[0]->Degree());
 				if (degrees[0] <= 3)
 					break;
-				degrees[1] = static_cast<int>(vertices[1]->Degree());
-				if (degrees[1] <= 3)
-					break;
 				degrees[2] = static_cast<int>(vertices[2]->Degree());
+				if (degrees[2] <= 3)
+					break;
+				degrees[1] = static_cast<int>(vertices[1]->Degree());
 				degrees[3] = static_cast<int>(vertices[3]->Degree());
 
 				int sumCost = 0;
@@ -216,8 +210,16 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 					sumFlipedCost += flipedDiff * flipedDiff;
 				}
 
-				if (sumFlipedCost < sumCost)
-					heMesh->FlipEdge(e);
+				if (sumFlipedCost >= sumCost)
+					break;
+
+				vector<Point3> positions;
+				for (auto v : vertices)
+					positions.push_back(v->pos);
+				if (!Geometry::IsConvexPolygon(positions))
+					break;
+
+				heMesh->FlipEdge(e);
 			} while (false);
 
 			for (auto idx : sortedIndices)
@@ -247,6 +249,8 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 		};
 		auto step5_v = [&](V* v) {
 			size_t idx = heMesh->Index(v);
+			assert((v->IsBoundary() && v->AdjPolygons().size() >= 2)
+				|| (!v->IsBoundary() && v->AdjPolygons().size() >= 3));
 			for (auto adjP : v->AdjPolygons()) {
 				if (HEMesh<V>::P::IsBoundary(adjP))
 					continue;
@@ -310,4 +314,33 @@ const Vec3 IsotropicRemeshing::V::Project(const Vec3& p, const Normalf& norm) co
 			return ray.At(get<2>(rst));
 	}
 	return p;
+}
+
+bool IsotropicRemeshing::E::IsCanCollapse(float min, float maxL) const {
+	if (Length() > min)
+		return false;
+
+	auto p0 = HalfEdge()->Origin();
+	auto p1 = HalfEdge()->End();
+
+	if (p0->IsBoundary() || p1->IsBoundary())
+		return false;
+
+	for (auto adjV : p0->AdjVertices()) {
+		if (adjV->IsBoundary())
+			return false;
+	}
+
+	for (auto adjV : p1->AdjVertices()) {
+		if (adjV->IsBoundary())
+			return false;
+	}
+
+	const auto c = Centroid();
+	for (auto adjV : AdjVertices()) {
+		if (Point3::Distance(adjV->pos, c) > maxL)
+			return false;
+	}
+
+	return true;
 }
