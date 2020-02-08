@@ -1,31 +1,31 @@
 #项目名，默认为目录名
-GET_DIR_NAME(DIRNAME)
-set(TARGET_NAME ${DIRNAME})
-#多个源文件用 [空格] 分隔
-#如：set(STR_TARGET_SOURCES "main.cpp src_2.cpp")
-file(GLOB ALL_SOURCES
+Ubpa_GetDirName(DIRNAME)
+set(targetName ${DIRNAME})
+#多个源文件用 ';' 分隔
+#如：set(sources "main.cpp;src_2.cpp;help.h")
+file(GLOB sources
 	"${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
 	"${CMAKE_CURRENT_SOURCE_DIR}/*.h"
 )
-set(STR_TARGET_SOURCES "")
-foreach(SOURCE ${ALL_SOURCES})
-	set(STR_TARGET_SOURCES "${STR_TARGET_SOURCES} ${SOURCE}")
-endforeach(SOURCE ${ALL_SOURCES})
-set(STR_TARGET_SOURCES "${STR_TARGET_SOURCES} ${CMAKE_SOURCE_DIR}/include/CppUtil/Engine/SObj.h")
-set(STR_TARGET_SOURCES "${STR_TARGET_SOURCES} ${CMAKE_SOURCE_DIR}/include/CppUtil/Engine/SObj.inl")
-set(STR_TARGET_SOURCES "${STR_TARGET_SOURCES} ${CMAKE_SOURCE_DIR}/include/CppUtil/Engine/Scene.h")
 
-set(STR_TARGET_SOURCES "${STR_TARGET_SOURCES} ${CMAKE_SOURCE_DIR}/include/CppUtil/Engine/Component.h")
-set(STR_TARGET_SOURCES "${STR_TARGET_SOURCES} ${CMAKE_SOURCE_DIR}/include/CppUtil/Engine/CmptTransform.h")
-set(STR_TARGET_SOURCES "${STR_TARGET_SOURCES} ${CMAKE_SOURCE_DIR}/include/CppUtil/Engine/CmptGeometry.h")
-set(STR_TARGET_SOURCES "${STR_TARGET_SOURCES} ${CMAKE_SOURCE_DIR}/include/CppUtil/Engine/CmptCamera.h")
-set(STR_TARGET_SOURCES "${STR_TARGET_SOURCES} ${CMAKE_SOURCE_DIR}/include/CppUtil/Engine/CmptMaterial.h")
-set(STR_TARGET_SOURCES "${STR_TARGET_SOURCES} ${CMAKE_SOURCE_DIR}/include/CppUtil/Engine/CmptLight.h")
+list(APPEND sources "${CMAKE_SOURCE_DIR}/include/CppUtil/Engine/SObj.h")
+list(APPEND sources "${CMAKE_SOURCE_DIR}/include/CppUtil/Engine/SObj.inl")
+list(APPEND sources "${CMAKE_SOURCE_DIR}/include/CppUtil/Engine/Scene.h")
 
-#多个库文件用 [空格] 分隔，如果为空，就输入[一个空格]
-#如：set(STR_TARGET_LIBS "lib1.lib lib2.lib")
-set(STR_TARGET_LIBS_COMMON "Light Primitive Material tinyxml2 StrAPI")
-set(STR_TARGET_LIBS_DEBUG "3rdParty/assimp-vc140-mtd 3rdParty/zlibstaticd 3rdParty/IrrXMLd")
-set(STR_TARGET_LIBS_RELEASE "3rdParty/assimp-vc140-mt 3rdParty/zlibstatic 3rdParty/IrrXML")
+list(APPEND sources "${CMAKE_SOURCE_DIR}/include/CppUtil/Engine/Component.h")
+list(APPEND sources "${CMAKE_SOURCE_DIR}/include/CppUtil/Engine/CmptTransform.h")
+list(APPEND sources "${CMAKE_SOURCE_DIR}/include/CppUtil/Engine/CmptGeometry.h")
+list(APPEND sources "${CMAKE_SOURCE_DIR}/include/CppUtil/Engine/CmptCamera.h")
+list(APPEND sources "${CMAKE_SOURCE_DIR}/include/CppUtil/Engine/CmptMaterial.h")
+list(APPEND sources "${CMAKE_SOURCE_DIR}/include/CppUtil/Engine/CmptLight.h")
 
-SETUP_PROJECT_DR(${MODE} ${TARGET_NAME} ${STR_TARGET_SOURCES} ${STR_TARGET_LIBS_COMMON} ${STR_TARGET_LIBS_DEBUG} ${STR_TARGET_LIBS_RELEASE})
+#多个库文件用 ';' 分隔，如果为空，则为 ""
+#如：set(libs "targetName;xxx.lib")
+set(libsG "Light;Primitive;Material;tinyxml2;StrAPI")
+set(libsD "3rdParty/assimp-vc140-mtd;3rdParty/zlibstaticd;3rdParty/IrrXMLd")
+set(libsR "3rdParty/assimp-vc140-mt;3rdParty/zlibstatic;3rdParty/IrrXML")
+
+Ubpa_AddTarget_GDR(MODE ${mode} NAME ${targetName} SOURCES ${sources}
+	LIBS_GENERAL ${libsG}
+	LIBS_DEBUG ${libsD}
+	LIBS_RELEASE ${libsR})

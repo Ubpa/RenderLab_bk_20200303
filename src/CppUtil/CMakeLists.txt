@@ -1,7 +1,7 @@
 #生成 exe 就 "EXE"，生成 lib 就 "LIB"
-set(MODE "LIB")
+set(mode "LIB")
 
-GET_DIR_NAME(DIRNAME)
+Ubpa_GetDirName(DIRNAME)
 set(FOLDER_NAME ${DIRNAME})
 
-ADD_ALL_SUBDIR()
+Ubpa_AddSubDirs()

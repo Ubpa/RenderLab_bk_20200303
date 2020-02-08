@@ -1,1 +1,1 @@
-ADD_ALL_SUBDIR()
+Ubpa_AddSubDirs()

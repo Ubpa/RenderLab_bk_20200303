@@ -274,7 +274,7 @@ bool IsotropicRemeshing::Kernel(size_t n) {
 			float sumArea = 0.f;
 			for (auto outHE : v->OutHEs()) {
 				auto p0 = outHE->Polygon();
-				auto p1 = outHE->Pair()->Polygon();
+				auto  p1 = outHE->Pair()->Polygon();
 				float area = 0.5f * (triAreas[heMesh->Index(p0)] + triAreas[heMesh->Index(p1)]);
 
 				sumArea += area;
